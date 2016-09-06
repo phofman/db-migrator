@@ -1,0 +1,15 @@
+
+# Visual Studio metadata
+.vs/
+
+# build temporary files
+src/CodeTitans.DbMigrator.CLI/bin/
+src/CodeTitans.DbMigrator.CLI/obj/
+src/CodeTitans.DbMigrator.Core/bin/
+src/CodeTitans.DbMigrator.Core/obj/
+
+# testing
+TestResults/
+tests/UnitTests/bin/
+tests/UnitTests/obj/
+
