@@ -96,6 +96,7 @@ namespace CodeTitans.DbMigrator.Core
         /// </summary>
         public string[] Load(IEnumerable<KeyValuePair<string, string>> args = null)
         {
+            bool hasEmpty = false;
             var content = StatementSeparators.Split(File.ReadAllText(_path));
 
             // remove redundant stuff:
@@ -115,9 +116,30 @@ namespace CodeTitans.DbMigrator.Core
                 {
                     content[i] = content[i].Trim();
                 }
+
+                // mark items to delete items:
+                if (string.IsNullOrEmpty(content[i]))
+                {
+                    hasEmpty = true;
+                }
             }
 
-            return content;
+            // remove all empty entries:
+            if (hasEmpty)
+            {
+                var list = new List<string>(content);
+                for (int i = list.Count - 1; i >= 0; i--)
+                {
+                    if (string.IsNullOrEmpty(list[i]))
+                    {
+                        list.RemoveAt(i);
+                    }
+                }
+
+                content = list.ToArray();
+            }
+
+            return _statements = content;
         }
 
         /// <summary>
@@ -126,6 +148,23 @@ namespace CodeTitans.DbMigrator.Core
         public void Unload()
         {
             _statements = null;
+        }
+
+        /// <summary>
+        /// Checks if any of the statements contains given text.
+        /// </summary>
+        public bool Contains(string text)
+        {
+            if (_statements == null || string.IsNullOrEmpty(text))
+                return false;
+
+            foreach (var s in _statements)
+            {
+                if (s.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+
+            return false;
         }
 
         /// <inheritdoc />
