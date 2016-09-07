@@ -13,7 +13,7 @@ namespace CodeTitans.DbMigrator.Core
     [DebuggerDisplay("{Version} - {Name}")]
     public sealed class MigrationScript : IComparable<MigrationScript>
     {
-        private static readonly Regex StatementSeparators = new Regex(@"^\w*GO\w*", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        private static readonly Regex StatementSeparators = new Regex(@"^\s*GO\s*", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
         private string[] _statements;
         private readonly string _path;
