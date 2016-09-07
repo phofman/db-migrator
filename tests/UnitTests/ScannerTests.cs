@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using CodeTitans.DbMigrator.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -71,6 +72,21 @@ namespace UnitTests
             var scripts = Scanner.LoadScripts(@"T:\thb\playground\sezam\THB.Ewidencja.DB\Skrypty", (name, level) => level < 1 || string.Compare(name, "procedury", StringComparison.OrdinalIgnoreCase) == 0);
 
             Assert.IsNotNull(scripts);
+        }
+
+        [TestMethod]
+        public void CreateDatabase_with_success()
+        {
+            var scripts = Scanner.LoadScripts(@"T:\thb\playground\sezam\THB.Ewidencja.DB\Skrypty");
+
+            Assert.IsNotNull(scripts);
+
+            var executor = new DbWorker(@"Data Source=(localdb)\thb;Integrated Security=True;");
+            var args = new List<KeyValuePair<string, string>>();
+            args.Add(new KeyValuePair<string, string>("DbName", "NewDb"));
+
+            var count = executor.ExecuteAsync(scripts, args).Result;
+            Assert.AreEqual(scripts.Count, count, "Too few scripts executed");
         }
     }
 }
