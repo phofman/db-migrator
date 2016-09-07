@@ -128,11 +128,11 @@ namespace CodeTitans.DbMigrator.Core
                     transaction.Rollback();
                 DebugLog.WriteLine(" ... [FAILED]!");
 
+                DebugLog.Write(ex);
                 DebugLog.WriteLine(string.Format("Error encountered during execution of '{0}'", script.RelativePath));
                 DebugLog.WriteLine("--- --- --- --- --- --- --- --- --- --- --- ---");
                 DebugLog.WriteLine(currentStatement ?? "---");
                 DebugLog.WriteLine("--- --- --- --- --- --- --- --- --- --- --- ---");
-                DebugLog.Write(ex);
                 return false;
             }
             finally
