@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace CodeTitans.DbMigrator.Core
@@ -72,13 +73,7 @@ namespace CodeTitans.DbMigrator.Core
                 if (_statements != null)
                     return _statements;
 
-                _statements = StatementSeparators.Split(File.ReadAllText(_path));
-
-                // remove redundant stuff:
-                for (int i = 0; i < _statements.Length; i++)
-                    _statements[i] = _statements[i].Trim();
-
-                return _statements;
+                return _statements = Load();
             }
         }
 
@@ -95,6 +90,43 @@ namespace CodeTitans.DbMigrator.Core
         }
 
         #endregion
+
+        /// <summary>
+        /// Loads content of the migration script.
+        /// </summary>
+        public string[] Load(IEnumerable<KeyValuePair<string, string>> args = null)
+        {
+            var content = StatementSeparators.Split(File.ReadAllText(_path));
+
+            // remove redundant stuff:
+            for (int i = 0; i < content.Length; i++)
+            {
+                // apply arguments into the script:
+                if (args != null)
+                {
+                    var line = new StringBuilder(content[i].Trim());
+                    foreach (var a in args)
+                    {
+                        line.Replace("$(" + a.Key + ")", a.Value);
+                    }
+                    content[i] = line.ToString();
+                }
+                else
+                {
+                    content[i] = content[i].Trim();
+                }
+            }
+
+            return content;
+        }
+
+        /// <summary>
+        /// Forgets loaded content of migration script.
+        /// </summary>
+        public void Unload()
+        {
+            _statements = null;
+        }
 
         /// <inheritdoc />
         public override string ToString()
