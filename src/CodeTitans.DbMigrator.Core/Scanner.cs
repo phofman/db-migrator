@@ -13,18 +13,18 @@ namespace CodeTitans.DbMigrator.Core
                 throw new ArgumentNullException(nameof(path));
 
             List<MigrationScript> result = new List<MigrationScript>();
-            LoadScripts(result, path, new Version(0,0), 0, filter);
+            LoadScripts(result, path, path.Length + 1, new Version(0,0), 0, filter);
 
             result.Sort();
             return result.Count > 0 ? result.ToArray() : null;
         }
 
-        private static void LoadScripts(List<MigrationScript> result, string path, Version currentLevelVersion, int level, Func<string, int, bool> filter)
+        private static void LoadScripts(List<MigrationScript> result, string path, int relativePathPrefixLength, Version currentLevelVersion, int level, Func<string, int, bool> filter)
         {
             // is it a single file?
             if (File.Exists(path))
             {
-                Add(result, path, currentLevelVersion, level);
+                Add(result, path, Path.GetFileName(path), currentLevelVersion, level);
             }
             else
             {
@@ -33,7 +33,7 @@ namespace CodeTitans.DbMigrator.Core
                     // apply files at that level:
                     foreach (var file in Directory.GetFiles(path))
                     {
-                        Add(result, file, currentLevelVersion, level);
+                        Add(result, file, file.Substring(relativePathPrefixLength), currentLevelVersion, level);
                     }
 
                     // look into folders:
@@ -49,7 +49,7 @@ namespace CodeTitans.DbMigrator.Core
                             // filter:
                             if (filter == null || filter(name, level))
                             {
-                                LoadScripts(result, dir, Merge(currentLevelVersion, version, level), level + versionParts, filter);
+                                LoadScripts(result, dir, relativePathPrefixLength, Merge(currentLevelVersion, version, level), level + versionParts, filter);
                             }
                         }
                     }
@@ -57,15 +57,15 @@ namespace CodeTitans.DbMigrator.Core
             }
         }
 
-        private static void Add(List<MigrationScript> result, string path, Version currentLevelVersion, int level)
+        private static void Add(List<MigrationScript> result, string path, string relativePath, Version currentLevelVersion, int level)
         {
             Version version;
             int versionParts;
             string name;
 
-            if (TryParseName(Path.GetFileName(path), out version, out versionParts, out name))
+            if (TryParseName(Path.GetFileNameWithoutExtension(path), out version, out versionParts, out name))
             {
-                result.Add(new MigrationScript(Merge(currentLevelVersion, version, level), name, path));
+                result.Add(new MigrationScript(Merge(currentLevelVersion, version, level), name, path, relativePath));
             }
         }
 

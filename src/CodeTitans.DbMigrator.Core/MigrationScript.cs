@@ -26,10 +26,11 @@ namespace CodeTitans.DbMigrator.Core
             Name = name;
         }
 
-        public MigrationScript(Version version, string name, string path)
+        public MigrationScript(Version version, string name, string path, string relativePath)
             : this(version, name)
         {
             _path = path;
+            RelativePath = relativePath != null ? relativePath.Replace('\\', '/') : null;
         }
 
         #region Properties
@@ -47,6 +48,15 @@ namespace CodeTitans.DbMigrator.Core
         /// Gets the name of the migration.
         /// </summary>
         public string Name
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets the relative path of the migration script file.
+        /// </summary>
+        public string RelativePath
         {
             get;
             private set;
@@ -85,5 +95,11 @@ namespace CodeTitans.DbMigrator.Core
         }
 
         #endregion
+
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            return RelativePath ?? (Name ?? string.Empty);
+        }
     }
 }
