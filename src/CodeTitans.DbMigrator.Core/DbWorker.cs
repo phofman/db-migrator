@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -22,7 +21,7 @@ namespace CodeTitans.DbMigrator.Core
             _connectionString = connectinString;
         }
 
-        public async Task<int> ExecuteAsync(IEnumerable<MigrationScript> scripts, IEnumerable<KeyValuePair<string, string>> args = null)
+        public async Task<int> ExecuteAsync(IReadOnlyCollection<MigrationScript> scripts, IEnumerable<ScriptParam> args = null)
         {
             if (scripts == null)
                 return 0;
@@ -30,7 +29,6 @@ namespace CodeTitans.DbMigrator.Core
             int result = 0;
             var connection = new SqlConnection(_connectionString);
             var scriptParams = CreateScriptParams(args, connection);
-            int count = scripts.Count();
 
             try
             {
@@ -39,7 +37,7 @@ namespace CodeTitans.DbMigrator.Core
                 foreach (var script in scripts)
                 {
                     // execute the single migration script and check, if succeeded:
-                    if (await ExecuteScriptAsync(connection, script, result, count, scriptParams))
+                    if (await ExecuteScriptAsync(connection, script, result, scripts.Count, scriptParams))
                     {
                         result++;
                     }
@@ -64,20 +62,20 @@ namespace CodeTitans.DbMigrator.Core
         /// <summary>
         /// Creates a set of default parameters along with the externally given ones.
         /// </summary>
-        private static IEnumerable<KeyValuePair<string, string>> CreateScriptParams(IEnumerable<KeyValuePair<string, string>> args, SqlConnection connection)
+        private static IReadOnlyCollection<ScriptParam> CreateScriptParams(IEnumerable<ScriptParam> args, SqlConnection connection)
         {
-            var scriptParams = new List<KeyValuePair<string, string>>();
+            var scriptParams = new List<ScriptParam>();
 
             // defaults:
-            scriptParams.Add(new KeyValuePair<string, string>("AppName", "DB-Migrator"));
-            scriptParams.Add(new KeyValuePair<string, string>("AppVersion", GetCurrentVersion()));
+            scriptParams.Add(new ScriptParam("AppName", "DB-Migrator"));
+            scriptParams.Add(new ScriptParam("AppVersion", GetCurrentVersion()));
             if (!string.IsNullOrEmpty(connection.Database))
             {
-                scriptParams.Add(new KeyValuePair<string, string>("DbName", "[" + connection.Database + "]"));
+                scriptParams.Add(new ScriptParam("DbName", "[" + connection.Database + "]"));
             }
             if (!string.IsNullOrEmpty(connection.DataSource))
             {
-                scriptParams.Add(new KeyValuePair<string, string>("DbServer", "[" + connection.DataSource + "]"));
+                scriptParams.Add(new ScriptParam("DbServer", "[" + connection.DataSource + "]"));
             }
 
             if (args != null)
@@ -97,7 +95,7 @@ namespace CodeTitans.DbMigrator.Core
             return name.Version.ToString();
         }
 
-        private async Task<bool> ExecuteScriptAsync(SqlConnection connection, MigrationScript script, int currentIndex, int count, IEnumerable<KeyValuePair<string, string>> args)
+        private async Task<bool> ExecuteScriptAsync(SqlConnection connection, MigrationScript script, int currentIndex, int count, IEnumerable<ScriptParam> args)
         {
             SqlTransaction transaction = null;
             string currentStatement = null;

@@ -94,7 +94,7 @@ namespace CodeTitans.DbMigrator.Core
         /// <summary>
         /// Loads content of the migration script.
         /// </summary>
-        public string[] Load(IEnumerable<KeyValuePair<string, string>> args = null)
+        public string[] Load(IEnumerable<ScriptParam> args = null)
         {
             bool hasEmpty = false;
             var content = StatementSeparators.Split(File.ReadAllText(_path));
@@ -108,7 +108,10 @@ namespace CodeTitans.DbMigrator.Core
                     var line = new StringBuilder(content[i].Trim());
                     foreach (var a in args)
                     {
-                        line.Replace("$(" + a.Key + ")", a.Value);
+                        if (!string.IsNullOrEmpty(a.ScriptKey))
+                        {
+                            line.Replace(a.ScriptKey, a.Value);
+                        }
                     }
                     content[i] = line.ToString();
                 }

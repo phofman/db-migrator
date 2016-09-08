@@ -82,8 +82,8 @@ namespace UnitTests
             Assert.IsNotNull(scripts);
 
             var executor = new DbWorker(@"Data Source=(localdb)\thb;Integrated Security=True;");
-            var args = new List<KeyValuePair<string, string>>();
-            args.Add(new KeyValuePair<string, string>("DbName", "NewDb"));
+            var args = new List<ScriptParam>();
+            args.Add(new ScriptParam("DbName", "NewDb"));
 
             var count = executor.ExecuteAsync(scripts, args).Result;
             Assert.AreEqual(scripts.Count, count, "Too few scripts executed");
