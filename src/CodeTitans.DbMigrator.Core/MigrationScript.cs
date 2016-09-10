@@ -108,9 +108,9 @@ namespace CodeTitans.DbMigrator.Core
                     var line = new StringBuilder(content[i].Trim());
                     foreach (var a in args)
                     {
-                        if (!string.IsNullOrEmpty(a.ScriptKey))
+                        if (!string.IsNullOrEmpty(a.ScriptParamName))
                         {
-                            line.Replace(a.ScriptKey, a.Value);
+                            line.Replace(a.ScriptParamName, a.Value);
                         }
                     }
                     content[i] = line.ToString();

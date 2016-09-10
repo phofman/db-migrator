@@ -6,7 +6,7 @@
     public sealed class ScriptParam
     {
         private string _name;
-        private string _scriptKey;
+        private string _scriptParamName;
 
         /// <summary>
         /// Default constructor.
@@ -35,7 +35,7 @@
             set
             {
                 _name = value;
-                _scriptKey = string.IsNullOrEmpty(value) ? null : "$(" + value + ")";
+                _scriptParamName = string.IsNullOrEmpty(value) ? null : "$(" + value + ")";
             }
         }
 
@@ -51,9 +51,9 @@
         /// <summary>
         /// Internal text representing the parameter inside the script, using during the 'replace' stage.
         /// </summary>
-        internal string ScriptKey
+        internal string ScriptParamName
         {
-            get { return _scriptKey; }
+            get { return _scriptParamName; }
         }
 
         #endregion
