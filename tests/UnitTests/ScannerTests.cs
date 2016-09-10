@@ -83,10 +83,11 @@ namespace UnitTests
 
             var executor = new DbWorker("(localdb)\\thb", null, null);
             var args = new List<ScriptParam>();
-            args.Add(new ScriptParam("DbName", "CT-NewDb"));
+            args.Add(new ScriptParam(DbWorker.DatabaseNameParamName, "CT-NewDb"));
 
             // drop existing database...
             var removed = executor.DropDatabase(args).Result;
+            Assert.IsTrue(removed, "Failed to drop database");
 
             // and create the new one...
             var count = executor.ExecuteAsync(scripts, args).Result;

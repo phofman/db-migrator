@@ -11,6 +11,9 @@ namespace CodeTitans.DbMigrator.Core
     /// </summary>
     public sealed class DbWorker
     {
+        /// <summary>
+        /// Name of the parameter that holds the name of the database.
+        /// </summary>
         public const string DatabaseNameParamName = "DbName";
 
         private readonly string _connectionString;
