@@ -81,10 +81,14 @@ namespace UnitTests
 
             Assert.IsNotNull(scripts);
 
-            var executor = new DbWorker(@"Data Source=(localdb)\thb;Integrated Security=True;");
+            var executor = new DbWorker("(localdb)\\thb", null, null);
             var args = new List<ScriptParam>();
-            args.Add(new ScriptParam("DbName", "NewDb"));
+            args.Add(new ScriptParam("DbName", "CT-NewDb"));
 
+            // drop existing database...
+            var removed = executor.DropDatabase(args).Result;
+
+            // and create the new one...
             var count = executor.ExecuteAsync(scripts, args).Result;
             Assert.AreEqual(scripts.Count, count, "Too few scripts executed");
         }
