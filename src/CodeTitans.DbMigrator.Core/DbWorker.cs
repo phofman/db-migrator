@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -50,7 +51,7 @@ namespace CodeTitans.DbMigrator.Core
         /// <summary>
         /// Executes specified set of migration scripts over the database.
         /// </summary>
-        public async Task<int> ExecuteAsync(IReadOnlyCollection<MigrationScript> scripts, IEnumerable<ScriptParam> args = null, Action<MigrationScript, int> afterExecution = null)
+        public async Task<int> ExecuteAsync(IReadOnlyCollection<MigrationScript> scripts, IEnumerable<ScriptParam> args = null, Action<SqlConnection, SqlTransaction, MigrationScript, int> postExecution = null)
         {
             if (scripts == null)
                 return 0;
@@ -66,12 +67,8 @@ namespace CodeTitans.DbMigrator.Core
                 foreach (var script in scripts)
                 {
                     // execute the single migration script and check, if succeeded:
-                    if (await ExecuteScriptAsync(connection, script, result, scripts.Count, scriptParams))
+                    if (await ExecuteScriptAsync(connection, script, result, scripts.Count, scriptParams, postExecution))
                     {
-                        if (afterExecution != null)
-                        {
-                            afterExecution(script, result);
-                        }
                         result++;
                     }
                     else
@@ -128,7 +125,7 @@ namespace CodeTitans.DbMigrator.Core
             return name.Version.ToString();
         }
 
-        private async Task<bool> ExecuteScriptAsync(SqlConnection connection, MigrationScript script, int currentIndex, int count, IEnumerable<ScriptParam> args)
+        private async Task<bool> ExecuteScriptAsync(SqlConnection connection, MigrationScript script, int currentIndex, int count, IEnumerable<ScriptParam> args, Action<SqlConnection, SqlTransaction, MigrationScript, int> postExecution = null)
         {
             SqlTransaction transaction = null;
             string currentStatement = null;
@@ -148,9 +145,16 @@ namespace CodeTitans.DbMigrator.Core
                     DebugLog.Write(".");
                 }
 
+                DebugLog.WriteLine(" [DONE]!");
+
+                // execute custom action after all statements:
+                if (postExecution != null)
+                {
+                    postExecution(connection, transaction, script, currentIndex);
+                }
+
                 if (transaction != null)
                     transaction.Commit();
-                DebugLog.WriteLine(" [DONE]!");
                 return true;
             }
             catch (Exception ex)
@@ -175,8 +179,18 @@ namespace CodeTitans.DbMigrator.Core
 
         private Task<int> ExecuteNonQueryAsync(SqlConnection connection, SqlTransaction transaction, string statement, IEnumerable<ScriptParam> args = null)
         {
+            var command = CreateTextCommand(connection, transaction, statement, args);
+            return command.ExecuteNonQueryAsync();
+        }
+
+        /// <summary>
+        /// Creates new SQL command.
+        /// </summary>
+        private static SqlCommand CreateTextCommand(SqlConnection connection, SqlTransaction transaction, string statement, IEnumerable<ScriptParam> args)
+        {
             var command = connection.CreateCommand();
             command.CommandText = statement;
+            command.CommandType = CommandType.Text;
             command.Transaction = transaction;
 
             if (args != null)
@@ -186,8 +200,7 @@ namespace CodeTitans.DbMigrator.Core
                     command.Parameters.AddWithValue(arg.SqlParamName, arg.Value);
                 }
             }
-
-            return command.ExecuteNonQueryAsync();
+            return command;
         }
 
         /// <summary>
@@ -252,6 +265,41 @@ namespace CodeTitans.DbMigrator.Core
             {
                 connection.Close();
             }
+        }
+
+        /// <summary>
+        /// Executes scalar query to database.
+        /// </summary>
+        public async Task<T> ExecuteScalarAsync<T>(string statement, IEnumerable<ScriptParam> args = null)
+        {
+            var connection = new SqlConnection(_connectionString);
+
+            try
+            {
+                // open connection:
+                await connection.OpenAsync();
+
+                // execute query:
+                var result = await ExecuteScalaQueryAsync(connection, statement, args);
+
+                // give back result:
+                return (T) result;
+            }
+            catch (Exception ex)
+            {
+                DebugLog.Write(ex);
+                throw;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
+        private Task<object> ExecuteScalaQueryAsync(SqlConnection connection, string statement, IEnumerable<ScriptParam> args)
+        {
+            var command = CreateTextCommand(connection, null, statement, args);
+            return command.ExecuteScalarAsync();
         }
     }
 }
