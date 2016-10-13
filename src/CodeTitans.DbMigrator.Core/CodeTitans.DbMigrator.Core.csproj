@@ -40,7 +40,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers\AdoDbHelper.cs" />
     <Compile Include="IDbVersionManager.cs" />
+    <Compile Include="Migrations\DbTSqlExecutor.cs" />
     <Compile Include="Migrations\DbTSqlWorker.cs" />
     <Compile Include="DebugLog.cs" />
     <Compile Include="IDbExecutor.cs" />
@@ -51,6 +53,7 @@
     <Compile Include="Scanner.cs" />
     <Compile Include="ScriptParam.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

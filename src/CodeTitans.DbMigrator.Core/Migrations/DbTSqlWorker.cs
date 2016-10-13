@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
+using CodeTitans.DbMigrator.Core.Helpers;
 
 namespace CodeTitans.DbMigrator.Core.Migrations
 {
@@ -99,7 +100,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations
                 foreach (var statement in script.Statements)
                 {
                     currentStatement = statement;
-                    await ExecuteNonQueryAsync(connection, transaction, statement);
+                    await AdoNetDbHelper.ExecuteNonQueryAsync(connection, transaction, statement);
                     DebugLog.Write(".");
                 }
 
@@ -108,7 +109,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations
                 // execute custom action after all statements:
                 if (manager != null)
                 {
-                    //postExecution(connection, transaction, script, currentIndex);
+                    manager.Update(new DbTSqlExecutor(connection, transaction), script, currentIndex, args);
                 }
 
                 if (transaction != null)
@@ -133,32 +134,6 @@ namespace CodeTitans.DbMigrator.Core.Migrations
                 // release memory occupied by internal statements:
                 script.Unload();
             }
-        }
-
-        private static Task<int> ExecuteNonQueryAsync(SqlConnection connection, SqlTransaction transaction, string statement, IEnumerable<ScriptParam> args = null)
-        {
-            var command = CreateTextCommand(connection, transaction, statement, args);
-            return command.ExecuteNonQueryAsync();
-        }
-
-        /// <summary>
-        /// Creates new SQL command.
-        /// </summary>
-        private static SqlCommand CreateTextCommand(SqlConnection connection, SqlTransaction transaction, string statement, IEnumerable<ScriptParam> args)
-        {
-            var command = connection.CreateCommand();
-            command.CommandText = statement;
-            command.CommandType = CommandType.Text;
-            command.Transaction = transaction;
-
-            if (args != null)
-            {
-                foreach (var arg in args)
-                {
-                    command.Parameters.AddWithValue(arg.SqlParamName, arg.Value);
-                }
-            }
-            return command;
         }
 
         /// <inheritdoc />
@@ -220,13 +195,13 @@ namespace CodeTitans.DbMigrator.Core.Migrations
                 // close connections:
                 if (closeExistingConnections)
                 {
-                    await ExecuteNonQueryAsync(connection, null, $"IF EXISTS (SELECT name FROM sys.databases WHERE name = @{ScriptParam.DatabaseNameParamName})\r\n" +
-                                                                 $"    ALTER DATABASE [{database}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE", args);
+                    await AdoNetDbHelper.ExecuteNonQueryAsync(connection, null, $"IF EXISTS (SELECT name FROM sys.databases WHERE name = @{ScriptParam.DatabaseNameParamName})\r\n" +
+                                                                                $"    ALTER DATABASE [{database}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE", args);
                 }
 
                 // drop database:
-                await ExecuteNonQueryAsync(connection, null, $"IF EXISTS (SELECT name FROM sys.databases WHERE name = @{ScriptParam.DatabaseNameParamName})\r\n" +
-                                                             $"    DROP DATABASE [{database}]", args);
+                await AdoNetDbHelper.ExecuteNonQueryAsync(connection, null, $"IF EXISTS (SELECT name FROM sys.databases WHERE name = @{ScriptParam.DatabaseNameParamName})\r\n" +
+                                                                            $"    DROP DATABASE [{database}]", args);
 
                 DebugLog.WriteLine($"Dropped database {database} ... [OK]");
                 return true;
@@ -256,7 +231,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations
                 await connection.OpenAsync();
 
                 // execute query:
-                var result = await ExecuteScalarQueryAsync(connection, statement, args);
+                var result = await AdoNetDbHelper.ExecuteScalarQueryAsync(connection, statement, args);
 
                 // give back result:
                 return (T) result;
@@ -270,12 +245,6 @@ namespace CodeTitans.DbMigrator.Core.Migrations
             {
                 connection.Close();
             }
-        }
-
-        private static Task<object> ExecuteScalarQueryAsync(SqlConnection connection, string statement, IEnumerable<ScriptParam> args)
-        {
-            var command = CreateTextCommand(connection, null, statement, args);
-            return command.ExecuteScalarAsync();
         }
     }
 }
