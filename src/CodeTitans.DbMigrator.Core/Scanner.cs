@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 namespace CodeTitans.DbMigrator.Core
 {
     /// <summary>
-    /// Class 
+    /// Class detecting and filtering migration scripts over selected sources.
     /// </summary>
     public static class Scanner
     {
