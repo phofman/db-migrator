@@ -108,6 +108,7 @@ namespace CodeTitans.DbMigrator.Core
 
         #region Overrides of Object
 
+        /// <inheritdoc />
         public override string ToString()
         {
             return string.Concat(Name, ": ", Value);

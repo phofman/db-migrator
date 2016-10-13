@@ -5,8 +5,14 @@ using System.Text.RegularExpressions;
 
 namespace CodeTitans.DbMigrator.Core
 {
+    /// <summary>
+    /// Class 
+    /// </summary>
     public static class Scanner
     {
+        /// <summary>
+        /// Scans specified folder and its subfolders looking for migration scripts.
+        /// </summary>
         public static IReadOnlyCollection<MigrationScript> LoadScripts(string path, Func<string, int, bool> filter = null)
         {
             if (string.IsNullOrEmpty(path))
@@ -69,6 +75,9 @@ namespace CodeTitans.DbMigrator.Core
             }
         }
 
+        /// <summary>
+        /// Merges two versions (one from folder, one from its subfolder) to build final version.
+        /// </summary>
         internal static Version Merge(Version current, Version existing, int level)
         {
             if (existing == null)

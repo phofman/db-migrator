@@ -208,7 +208,7 @@ namespace CodeTitans.DbMigrator.Core
 
                 // drop database:
                 await ExecuteNonQueryAsync(connection, null, $"IF EXISTS (SELECT name FROM sys.databases WHERE name = @{ScriptParam.DatabaseNameParamName})\r\n" +
-                                                                 $"    DROP DATABASE [{database}]", args);
+                                                             $"    DROP DATABASE [{database}]", args);
 
                 DebugLog.WriteLine($"Dropped database {database} ... [OK]");
                 return true;
