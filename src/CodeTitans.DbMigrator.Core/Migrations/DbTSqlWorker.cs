@@ -164,13 +164,28 @@ namespace CodeTitans.DbMigrator.Core.Migrations
         /// <inheritdoc />
         public Task<bool> CreateDatabase(string name, IEnumerable<ScriptParam> args = null, IDbVersionManager manager = null)
         {
-            throw new NotImplementedException();
+            // find the database name inside arguments if not given upfront:
+            if (string.IsNullOrEmpty(name))
+            {
+                name = ScriptParam.FindValue(args, ScriptParam.DatabaseNameParamName);
+            }
+
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentOutOfRangeException(nameof(name));
+
+            return Task.FromResult(false);
         }
 
         /// <inheritdoc />
         public Task<bool> CreateDatabase(IEnumerable<ScriptParam> args, IDbVersionManager manager = null)
         {
-            throw new NotImplementedException();
+            // find the database name inside arguments:
+            var db = ScriptParam.FindValue(args, ScriptParam.DatabaseNameParamName);
+
+            if (string.IsNullOrEmpty(db))
+                throw new ArgumentOutOfRangeException(nameof(args));
+
+            return CreateDatabase(db, args, manager);
         }
 
         /// <summary>
@@ -178,17 +193,8 @@ namespace CodeTitans.DbMigrator.Core.Migrations
         /// </summary>
         public Task<bool> DropDatabase(IEnumerable<ScriptParam> args, bool closeExistingConnections = true)
         {
-            string db = null;
-
             // find the database name inside arguments:
-            foreach (var arg in args)
-            {
-                if (string.Compare(ScriptParam.DatabaseNameParamName, arg.Name, StringComparison.OrdinalIgnoreCase) == 0)
-                {
-                    db = arg.Value;
-                    break;
-                }
-            }
+            var db = ScriptParam.FindValue(args, ScriptParam.DatabaseNameParamName);
 
             if (string.IsNullOrEmpty(db))
                 throw new ArgumentOutOfRangeException(nameof(args));

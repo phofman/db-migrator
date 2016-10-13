@@ -152,5 +152,43 @@ namespace CodeTitans.DbMigrator.Core
             var name = new AssemblyName(Assembly.GetExecutingAssembly().FullName);
             return name.Version.ToString();
         }
+
+        /// <summary>
+        /// Searches for parameter with specified name.
+        /// </summary>
+        public static ScriptParam Find(IEnumerable<ScriptParam> args, string name)
+        {
+            if (args == null || string.IsNullOrEmpty(name))
+                return null;
+
+            foreach (var arg in args)
+            {
+                if (string.Compare(name, arg.Name, StringComparison.OrdinalIgnoreCase) == 0)
+                {
+                    return arg;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Searches for value of parameter with specified name.
+        /// </summary>
+        public static string FindValue(IEnumerable<ScriptParam> args, string name, string defaultValue = null)
+        {
+            if (args == null || string.IsNullOrEmpty(name))
+                return defaultValue;
+
+            foreach (var arg in args)
+            {
+                if (string.Compare(name, arg.Name, StringComparison.OrdinalIgnoreCase) == 0)
+                {
+                    return arg.Value;
+                }
+            }
+
+            return defaultValue;
+        }
     }
 }
