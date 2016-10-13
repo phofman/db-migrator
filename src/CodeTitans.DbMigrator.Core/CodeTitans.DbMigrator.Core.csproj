@@ -42,6 +42,8 @@
   <ItemGroup>
     <Compile Include="DbWorker.cs" />
     <Compile Include="DebugLog.cs" />
+    <Compile Include="IDbExecutor.cs" />
+    <Compile Include="IDbWorker.cs" />
     <Compile Include="MigrationScript.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Scanner.cs" />

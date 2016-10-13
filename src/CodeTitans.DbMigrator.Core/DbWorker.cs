@@ -9,7 +9,7 @@ namespace CodeTitans.DbMigrator.Core
     /// <summary>
     /// Worker class to connect to dabase and perform special actions.
     /// </summary>
-    public sealed class DbWorker
+    public sealed class DbWorker : IDbWorker
     {
         private readonly string _connectionString;
 
@@ -45,7 +45,7 @@ namespace CodeTitans.DbMigrator.Core
         /// <summary>
         /// Executes specified set of migration scripts over the database.
         /// </summary>
-        public async Task<int> ExecuteAsync(IReadOnlyCollection<MigrationScript> scripts, IEnumerable<ScriptParam> args = null, Action<SqlConnection, SqlTransaction, MigrationScript, int> postExecution = null)
+        public async Task<int> ExecuteAsync(IReadOnlyCollection<MigrationScript> scripts, IEnumerable<ScriptParam> args = null, Action<IDbExecutor, MigrationScript, int> postExecution = null)
         {
             if (scripts == null)
                 return 0;
@@ -83,7 +83,7 @@ namespace CodeTitans.DbMigrator.Core
             return result;
         }
 
-        private async Task<bool> ExecuteScriptAsync(SqlConnection connection, MigrationScript script, int currentIndex, int count, IEnumerable<ScriptParam> args, Action<SqlConnection, SqlTransaction, MigrationScript, int> postExecution = null)
+        private async Task<bool> ExecuteScriptAsync(SqlConnection connection, MigrationScript script, int currentIndex, int count, IEnumerable<ScriptParam> args, Action<IDbExecutor, MigrationScript, int> postExecution = null)
         {
             SqlTransaction transaction = null;
             string currentStatement = null;
@@ -108,7 +108,7 @@ namespace CodeTitans.DbMigrator.Core
                 // execute custom action after all statements:
                 if (postExecution != null)
                 {
-                    postExecution(connection, transaction, script, currentIndex);
+                    //postExecution(connection, transaction, script, currentIndex);
                 }
 
                 if (transaction != null)
@@ -135,7 +135,7 @@ namespace CodeTitans.DbMigrator.Core
             }
         }
 
-        private Task<int> ExecuteNonQueryAsync(SqlConnection connection, SqlTransaction transaction, string statement, IEnumerable<ScriptParam> args = null)
+        private static Task<int> ExecuteNonQueryAsync(SqlConnection connection, SqlTransaction transaction, string statement, IEnumerable<ScriptParam> args = null)
         {
             var command = CreateTextCommand(connection, transaction, statement, args);
             return command.ExecuteNonQueryAsync();
@@ -254,7 +254,7 @@ namespace CodeTitans.DbMigrator.Core
             }
         }
 
-        private Task<object> ExecuteScalarQueryAsync(SqlConnection connection, string statement, IEnumerable<ScriptParam> args)
+        private static Task<object> ExecuteScalarQueryAsync(SqlConnection connection, string statement, IEnumerable<ScriptParam> args)
         {
             var command = CreateTextCommand(connection, null, statement, args);
             return command.ExecuteScalarAsync();
