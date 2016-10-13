@@ -238,7 +238,7 @@ namespace CodeTitans.DbMigrator.Core
                 await connection.OpenAsync();
 
                 // execute query:
-                var result = await ExecuteScalaQueryAsync(connection, statement, args);
+                var result = await ExecuteScalarQueryAsync(connection, statement, args);
 
                 // give back result:
                 return (T) result;
@@ -254,7 +254,7 @@ namespace CodeTitans.DbMigrator.Core
             }
         }
 
-        private Task<object> ExecuteScalaQueryAsync(SqlConnection connection, string statement, IEnumerable<ScriptParam> args)
+        private Task<object> ExecuteScalarQueryAsync(SqlConnection connection, string statement, IEnumerable<ScriptParam> args)
         {
             var command = CreateTextCommand(connection, null, statement, args);
             return command.ExecuteScalarAsync();
