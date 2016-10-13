@@ -10,6 +10,15 @@ namespace CodeTitans.DbMigrator.Core
     /// </summary>
     public sealed class ScriptParam
     {
+        #region Predefined Parameter Names
+
+        /// <summary>
+        /// Name of the parameter that holds the name of the database.
+        /// </summary>
+        public const string DatabaseNameParamName = "DbName";
+
+        #endregion
+
         private string _name;
         private string _scriptParamName;
         private string _sqlParamName;

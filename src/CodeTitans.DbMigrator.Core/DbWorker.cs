@@ -11,11 +11,6 @@ namespace CodeTitans.DbMigrator.Core
     /// </summary>
     public sealed class DbWorker
     {
-        /// <summary>
-        /// Name of the parameter that holds the name of the database.
-        /// </summary>
-        public const string DatabaseNameParamName = "DbName";
-
         private readonly string _connectionString;
 
         /// <summary>
@@ -176,7 +171,7 @@ namespace CodeTitans.DbMigrator.Core
             // find the database name inside arguments:
             foreach (var arg in args)
             {
-                if (string.Compare(DatabaseNameParamName, arg.Name, StringComparison.OrdinalIgnoreCase) == 0)
+                if (string.Compare(ScriptParam.DatabaseNameParamName, arg.Name, StringComparison.OrdinalIgnoreCase) == 0)
                 {
                     db = arg.Value;
                     break;
@@ -199,7 +194,7 @@ namespace CodeTitans.DbMigrator.Core
                 throw new ArgumentNullException(nameof(database));
 
             var connection = new SqlConnection(_connectionString);
-            var args = new[] { new ScriptParam(DatabaseNameParamName, database) };
+            var args = new[] { new ScriptParam(ScriptParam.DatabaseNameParamName, database) };
             try
             {
                 await connection.OpenAsync();
@@ -207,12 +202,12 @@ namespace CodeTitans.DbMigrator.Core
                 // close connections:
                 if (closeExistingConnections)
                 {
-                    await ExecuteNonQueryAsync(connection, null, $"IF EXISTS (SELECT name FROM sys.databases WHERE name = @{DatabaseNameParamName})\r\n" +
+                    await ExecuteNonQueryAsync(connection, null, $"IF EXISTS (SELECT name FROM sys.databases WHERE name = @{ScriptParam.DatabaseNameParamName})\r\n" +
                                                                  $"    ALTER DATABASE [{database}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE", args);
                 }
 
                 // drop database:
-                await ExecuteNonQueryAsync(connection, null, $"IF EXISTS (SELECT name FROM sys.databases WHERE name = @{DatabaseNameParamName})\r\n" +
+                await ExecuteNonQueryAsync(connection, null, $"IF EXISTS (SELECT name FROM sys.databases WHERE name = @{ScriptParam.DatabaseNameParamName})\r\n" +
                                                                  $"    DROP DATABASE [{database}]", args);
 
                 DebugLog.WriteLine($"Dropped database {database} ... [OK]");
