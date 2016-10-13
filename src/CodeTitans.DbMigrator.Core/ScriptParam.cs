@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace CodeTitans.DbMigrator.Core
@@ -103,5 +105,42 @@ namespace CodeTitans.DbMigrator.Core
         }
 
         #endregion
+
+        /// <summary>
+        /// Creates a set of default parameters along with the externally given ones.
+        /// </summary>
+        public static IReadOnlyCollection<ScriptParam> CreateDefaults(IEnumerable<ScriptParam> args, string databaseServer = null, string databaseName = null)
+        {
+            var scriptParams = new List<ScriptParam>();
+
+            // defaults:
+            scriptParams.Add(new ScriptParam("AppName", "CodeTitans DB-Migrator"));
+            scriptParams.Add(new ScriptParam("AppVersion", GetCurrentVersion()));
+            if (!string.IsNullOrWhiteSpace(databaseServer))
+            {
+                scriptParams.Add(new ScriptParam("DbServer", databaseServer));
+            }
+            if (!string.IsNullOrWhiteSpace(databaseName))
+            {
+                scriptParams.Add(new ScriptParam("DbName", databaseName));
+            }
+
+            // copy source items:
+            if (args != null)
+            {
+                scriptParams.AddRange(args);
+            }
+
+            return scriptParams;
+        }
+
+        /// <summary>
+        /// Gets the version of currently executed assembly.
+        /// </summary>
+        private static string GetCurrentVersion()
+        {
+            var name = new AssemblyName(Assembly.GetExecutingAssembly().FullName);
+            return name.Version.ToString();
+        }
     }
 }

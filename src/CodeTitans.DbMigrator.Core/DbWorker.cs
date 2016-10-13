@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace CodeTitans.DbMigrator.Core
@@ -58,7 +57,7 @@ namespace CodeTitans.DbMigrator.Core
 
             int result = 0;
             var connection = new SqlConnection(_connectionString);
-            var scriptParams = CreateScriptParams(args, connection);
+            var scriptParams = ScriptParam.CreateDefaults(args, connection.DataSource, connection.Database);
 
             try
             {
@@ -87,42 +86,6 @@ namespace CodeTitans.DbMigrator.Core
             }
 
             return result;
-        }
-
-        /// <summary>
-        /// Creates a set of default parameters along with the externally given ones.
-        /// </summary>
-        private static IReadOnlyCollection<ScriptParam> CreateScriptParams(IEnumerable<ScriptParam> args, SqlConnection connection)
-        {
-            var scriptParams = new List<ScriptParam>();
-
-            // defaults:
-            scriptParams.Add(new ScriptParam("AppName", "DB-Migrator"));
-            scriptParams.Add(new ScriptParam("AppVersion", GetCurrentVersion()));
-            if (!string.IsNullOrEmpty(connection.Database))
-            {
-                scriptParams.Add(new ScriptParam("DbName", connection.Database));
-            }
-            if (!string.IsNullOrEmpty(connection.DataSource))
-            {
-                scriptParams.Add(new ScriptParam("DbServer", connection.DataSource));
-            }
-
-            if (args != null)
-            {
-                scriptParams.AddRange(args);
-            }
-
-            return scriptParams;
-        }
-
-        /// <summary>
-        /// Gets the version of currently executed assembly.
-        /// </summary>
-        private static string GetCurrentVersion()
-        {
-            var name = new AssemblyName(Assembly.GetExecutingAssembly().FullName);
-            return name.Version.ToString();
         }
 
         private async Task<bool> ExecuteScriptAsync(SqlConnection connection, MigrationScript script, int currentIndex, int count, IEnumerable<ScriptParam> args, Action<SqlConnection, SqlTransaction, MigrationScript, int> postExecution = null)
