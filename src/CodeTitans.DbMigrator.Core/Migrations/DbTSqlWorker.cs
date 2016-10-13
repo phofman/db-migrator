@@ -4,19 +4,19 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 
-namespace CodeTitans.DbMigrator.Core
+namespace CodeTitans.DbMigrator.Core.Migrations
 {
     /// <summary>
     /// Worker class to connect to dabase and perform special actions.
     /// </summary>
-    public sealed class DbWorker : IDbWorker
+    public sealed class DbTSqlWorker : IDbWorker
     {
         private readonly string _connectionString;
 
         /// <summary>
         /// Intializes with specified connection string.
         /// </summary>
-        public DbWorker(string connectinString)
+        public DbTSqlWorker(string connectinString)
         {
             if (string.IsNullOrEmpty(connectinString))
                 throw new ArgumentNullException(nameof(connectinString));
@@ -27,7 +27,7 @@ namespace CodeTitans.DbMigrator.Core
         /// <summary>
         /// Initializes connection to specified server with given user and password.
         /// </summary>
-        public DbWorker(string server, string user, string password)
+        public DbTSqlWorker(string server, string user, string password)
         {
             if (string.IsNullOrEmpty(server))
                 throw new ArgumentNullException(nameof(server));

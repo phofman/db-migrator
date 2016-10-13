@@ -81,7 +81,7 @@ namespace UnitTests
 
             Assert.IsNotNull(scripts);
 
-            var executor = new DbWorker("(localdb)\\thb", null, null);
+            var executor = Migrator.CreateForTSql("(localdb)\\thb", null, null);
             var args = new List<ScriptParam>();
             args.Add(new ScriptParam(ScriptParam.DatabaseNameParamName, "CT-NewDb"));
 
