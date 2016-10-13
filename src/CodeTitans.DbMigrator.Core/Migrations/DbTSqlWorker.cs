@@ -45,7 +45,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations
         /// <summary>
         /// Executes specified set of migration scripts over the database.
         /// </summary>
-        public async Task<int> ExecuteAsync(IReadOnlyCollection<MigrationScript> scripts, IEnumerable<ScriptParam> args = null, Action<IDbExecutor, MigrationScript, int> postExecution = null)
+        public async Task<int> ExecuteAsync(IReadOnlyCollection<MigrationScript> scripts, IEnumerable<ScriptParam> args = null, IDbVersionManager manager = null)
         {
             if (scripts == null)
                 return 0;
@@ -61,7 +61,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations
                 foreach (var script in scripts)
                 {
                     // execute the single migration script and check, if succeeded:
-                    if (await ExecuteScriptAsync(connection, script, result, scripts.Count, scriptParams, postExecution))
+                    if (await ExecuteScriptAsync(connection, script, result, scripts.Count, scriptParams, manager))
                     {
                         result++;
                     }
@@ -83,7 +83,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations
             return result;
         }
 
-        private async Task<bool> ExecuteScriptAsync(SqlConnection connection, MigrationScript script, int currentIndex, int count, IEnumerable<ScriptParam> args, Action<IDbExecutor, MigrationScript, int> postExecution = null)
+        private async Task<bool> ExecuteScriptAsync(SqlConnection connection, MigrationScript script, int currentIndex, int count, IEnumerable<ScriptParam> args, IDbVersionManager manager = null)
         {
             SqlTransaction transaction = null;
             string currentStatement = null;
@@ -106,7 +106,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations
                 DebugLog.WriteLine(" [DONE]!");
 
                 // execute custom action after all statements:
-                if (postExecution != null)
+                if (manager != null)
                 {
                     //postExecution(connection, transaction, script, currentIndex);
                 }
@@ -159,6 +159,18 @@ namespace CodeTitans.DbMigrator.Core.Migrations
                 }
             }
             return command;
+        }
+
+        /// <inheritdoc />
+        public Task<bool> CreateDatabase(string name, IEnumerable<ScriptParam> args = null, IDbVersionManager manager = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public Task<bool> CreateDatabase(IEnumerable<ScriptParam> args, IDbVersionManager manager = null)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>

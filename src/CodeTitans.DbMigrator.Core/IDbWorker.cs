@@ -12,12 +12,12 @@ namespace CodeTitans.DbMigrator.Core
         /// <summary>
         /// Creates new instance of the database if doesn't exist.
         /// </summary>
-        //Task<bool> CreateDatabase(string name);
+        Task<bool> CreateDatabase(string name, IEnumerable<ScriptParam> args = null, IDbVersionManager manager = null);
 
         /// <summary>
         /// Creates new instance of the database if doesn't exist.
         /// </summary>
-        //Task<bool> CreateDatabase(IEnumerable<ScriptParam> args);
+        Task<bool> CreateDatabase(IEnumerable<ScriptParam> args, IDbVersionManager manager = null);
 
         /// <summary>
         /// Removes specified database.
@@ -32,6 +32,6 @@ namespace CodeTitans.DbMigrator.Core
         /// <summary>
         /// Executes specified set of migration scripts over the database.
         /// </summary>
-        Task<int> ExecuteAsync(IReadOnlyCollection<MigrationScript> scripts, IEnumerable<ScriptParam> args = null, Action<IDbExecutor, MigrationScript, int> postExecution = null);
+        Task<int> ExecuteAsync(IReadOnlyCollection<MigrationScript> scripts, IEnumerable<ScriptParam> args = null, IDbVersionManager manager = null);
     }
 }
