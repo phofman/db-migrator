@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CodeTitans.DbMigrator.Core
 {
@@ -11,13 +12,13 @@ namespace CodeTitans.DbMigrator.Core
         /// <summary>
         /// Gets current version of the database.
         /// </summary>
-        Version GetVersion(IDbExecutor executor);
+        Task<Version> GetVersionAsync(IDbExecutor executor);
 
         /// <summary>
         /// Increments the database version.
         /// New version value could be extracted from the script, that just finished or from arguments.
         /// If scripts are run inside the batch the index will keep increasing.
         /// </summary>
-        void Update(IDbExecutor executor, MigrationScript script, int scriptBatchIndex, IEnumerable<ScriptParam> args);
+        Task UpdateAsync(IDbExecutor executor, MigrationScript script, int scriptBatchIndex, IEnumerable<ScriptParam> args);
     }
 }

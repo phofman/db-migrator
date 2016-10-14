@@ -87,15 +87,37 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
         {
             SqlTransaction transaction = null;
             string currentStatement = null;
+            IDbExecutor executor = null;
 
             try
             {
                 DebugLog.Write(string.Format("Preparing {0}/{1} - {2} ({3})", currentIndex + 1, count, script.Name, script.RelativePath));
                 script.Load(args);
+
+                transaction = script.Contains("CREATE DATABASE") ? null : connection.BeginTransaction("DbMigrator");
+
+                if (manager != null)
+                {
+                    executor = new DbTSqlExecutor(connection, transaction);
+
+                    // check the current database version:
+                    var version = await manager.GetVersionAsync(executor);
+                    if (version == null)
+                    {
+                        DebugLog.Write(" ... [ABORTED]");
+                        throw new InvalidOperationException("Unable to determine database version");
+                    }
+
+                    if (version >= script.Version)
+                    {
+                        DebugLog.WriteLine(string.Concat(" ... [SKIPPED] (db-version: ", version, ")"));
+                        return true;
+                    }
+                }
+
                 DebugLog.WriteLine(" ... [DONE]");
                 DebugLog.Write("Executing ");
 
-                transaction = script.Contains("CREATE DATABASE") ? null : connection.BeginTransaction("DbMigrator");
                 foreach (var statement in script.Statements)
                 {
                     currentStatement = statement;
@@ -108,7 +130,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                 // execute custom action after all statements:
                 if (manager != null)
                 {
-                    manager.Update(new DbTSqlExecutor(connection, transaction), script, currentIndex, args);
+                    await manager.UpdateAsync(executor, script, currentIndex, args);
                 }
 
                 if (transaction != null)
