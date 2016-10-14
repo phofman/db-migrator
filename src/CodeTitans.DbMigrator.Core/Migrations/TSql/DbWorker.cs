@@ -76,6 +76,27 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
             return new DbTSqlExecutor(connection, transaction);
         }
 
+        private async Task<bool> EnsureHasDatabase(DbConnection connection, DbTransaction transaction, IEnumerable<ScriptParam> args)
+        {
+            if (connection == null)
+                return true;
+
+            if (string.IsNullOrEmpty(connection.Database))
+            {
+                var dbName = ScriptParam.FindValue(args, ScriptParam.DatabaseNameParamName);
+                if (string.IsNullOrEmpty(dbName))
+                {
+                    DebugLog.WriteLine("Skipping database versioning due to lack of database name");
+                    return true;
+                }
+
+                UpdateWithDatabaseName(dbName);
+                await AdoNetDbHelper.ExecuteNonQueryAsync(connection, transaction, $"USE [{dbName}]");
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// Executes specified set of migration scripts over the database.
         /// </summary>
@@ -104,6 +125,26 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                         break;
                     }
                 }
+
+                // update the database version, if specified:
+                if (manager != null)
+                {
+                    var versionParam = ScriptParam.Find(args, ScriptParam.DatabaseNameParamVersion);
+                    if (versionParam != null)
+                    {
+                        bool skipUpdate = await EnsureHasDatabase(connection, null, args);
+                        if (!skipUpdate)
+                        {
+                            if (string.IsNullOrEmpty(_connectionString.InitialCatalog) && !string.IsNullOrEmpty(connection.Database))
+                            {
+                                _connectionString.InitialCatalog = connection.Database;
+                            }
+
+                            var executor = CreateExecutor(connection, null);
+                            await manager.UpdateAsync(executor, null, -1, new[] { versionParam });
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -128,7 +169,11 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                 DebugLog.Write(string.Format("Preparing {0}/{1} - {2} ({3})", currentIndex + 1, count, script.Name, script.RelativePath ?? "no path"));
                 script.Load(args);
 
-                transaction = script.Contains("CREATE DATABASE") ? null : connection.BeginTransaction();
+                bool databaseCreation = script.Contains("CREATE DATABASE");
+                if (!databaseCreation)
+                {
+                    transaction = connection.BeginTransaction();
+                }
 
                 if (manager != null && transaction != null)
                 {
@@ -167,12 +212,17 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                 // execute custom action after all statements:
                 if (manager != null)
                 {
-                    if (executor == null)
-                    {
-                        executor = CreateExecutor(connection, transaction);
-                    }
+                    bool skipUpdate = await EnsureHasDatabase(connection, transaction, args);
 
-                    await manager.UpdateAsync(executor, script, currentIndex, args);
+                    if (!skipUpdate)
+                    {
+                        if (executor == null)
+                        {
+                            executor = CreateExecutor(connection, transaction);
+                        }
+
+                        await manager.UpdateAsync(executor, script, currentIndex, args);
+                    }
                 }
 
                 if (transaction != null)
@@ -224,7 +274,17 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                     {
                         new ScriptParam(ScriptParam.DatabaseNameParamName, name),
                         new ScriptParam(ScriptParam.DatabaseNameParamVersion, versionString)
-                    }, manager).ContinueWith(t => t.Result != 0);
+                    }, manager).ContinueWith(t =>
+            {
+                var success = t.Result != 0;
+
+                if (success)
+                {
+                    UpdateWithDatabaseName(name);
+                }
+
+                return success;
+            });
         }
 
         /// <inheritdoc />
