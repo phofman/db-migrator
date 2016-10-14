@@ -91,12 +91,12 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
 
             try
             {
-                DebugLog.Write(string.Format("Preparing {0}/{1} - {2} ({3})", currentIndex + 1, count, script.Name, script.RelativePath));
+                DebugLog.Write(string.Format("Preparing {0}/{1} - {2} ({3})", currentIndex + 1, count, script.Name, script.RelativePath ?? "no path"));
                 script.Load(args);
 
                 transaction = script.Contains("CREATE DATABASE") ? null : connection.BeginTransaction("DbMigrator");
 
-                if (manager != null)
+                if (manager != null && transaction != null)
                 {
                     executor = new DbTSqlExecutor(connection, transaction);
 
@@ -111,6 +111,9 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                     if (version >= script.Version)
                     {
                         DebugLog.WriteLine(string.Concat(" ... [SKIPPED] (db-version: ", version, ")"));
+
+                        await manager.OnSkippedAsync(executor, script, currentIndex, args);
+                        transaction.Commit();
                         return true;
                     }
                 }
@@ -130,6 +133,11 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                 // execute custom action after all statements:
                 if (manager != null)
                 {
+                    if (executor == null)
+                    {
+                        executor = new DbTSqlExecutor(connection, transaction);
+                    }
+
                     await manager.UpdateAsync(executor, script, currentIndex, args);
                 }
 
@@ -169,7 +177,20 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentOutOfRangeException(nameof(name));
 
-            return Task.FromResult(false);
+            var collation = ScriptParam.FindValue(args, ScriptParam.DatabaseNameParamCollation, "Polish_CI_AS");
+            var versionString = ScriptParam.FindValue(args, ScriptParam.DatabaseNameParamVersion, "0.0");
+            var query1 = $"IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE [name] = '{name}')\r\n" +
+                         "BEGIN\r\n" +
+                         $"    CREATE DATABASE [{name}] COLLATE {collation}\r\n" +
+                         $"END\r\n";
+            var query2 = $"USE [{name}]\r\n";
+
+            return ExecuteAsync(new[] { new MigrationScript(new Version(versionString), "Database Creation", new[] { query1, query2 }) },
+                    new[]
+                    {
+                        new ScriptParam(ScriptParam.DatabaseNameParamName, name),
+                        new ScriptParam(ScriptParam.DatabaseNameParamVersion, versionString)
+                    }, manager).ContinueWith(t => t.Result != 0);
         }
 
         /// <inheritdoc />
@@ -252,7 +273,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                 await connection.OpenAsync();
 
                 // execute query:
-                var result = await AdoNetDbHelper.ExecuteScalarQueryAsync(connection, statement, args);
+                var result = await AdoNetDbHelper.ExecuteScalarQueryAsync(connection, null, statement, args);
 
                 // give back result:
                 return (T) result;

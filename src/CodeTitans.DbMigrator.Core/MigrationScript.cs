@@ -18,13 +18,14 @@ namespace CodeTitans.DbMigrator.Core
         private string[] _statements;
         private readonly string _path;
 
-        public MigrationScript(Version version, string name)
+        public MigrationScript(Version version, string name, params string[] statements)
         {
             if (version == null)
                 throw new ArgumentNullException(nameof(version));
 
             Version = version;
             Name = name;
+            _statements = statements == null || statements.Length == 0 ? null : statements;
         }
 
         public MigrationScript(Version version, string name, string path, string relativePath)
@@ -96,6 +97,9 @@ namespace CodeTitans.DbMigrator.Core
         /// </summary>
         public string[] Load(IEnumerable<ScriptParam> args = null)
         {
+            if ((_statements != null && _statements.Length > 0) || string.IsNullOrEmpty(_path))
+                return _statements;
+
             bool hasEmpty = false;
             var content = StatementSeparators.Split(File.ReadAllText(_path));
 

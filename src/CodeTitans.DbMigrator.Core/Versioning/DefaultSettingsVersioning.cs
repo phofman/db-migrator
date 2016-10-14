@@ -4,15 +4,27 @@ using System.Threading.Tasks;
 
 namespace CodeTitans.DbMigrator.Core.Versioning
 {
-    public sealed class DefaultSettingsVersion : IDbVersionManager
+    /// <summary>
+    /// Class that manages the database version tracking and updating.
+    /// </summary>
+    public sealed class DefaultSettingsVersioning : IDbVersionManager
     {
         private readonly Version _defaultVersion;
         private readonly string _tableName;
+        private int _skipped;
 
-        public DefaultSettingsVersion(string tableName, Version defaultVersion)
+        public DefaultSettingsVersioning(string tableName = null, Version defaultVersion = null)
         {
             _defaultVersion = defaultVersion ?? new Version(1, 0);
             _tableName = tableName ?? "Settings";
+        }
+
+        /// <summary>
+        /// Gets the number of skipped scripts.
+        /// </summary>
+        public int Skipped
+        {
+            get { return _skipped; }
         }
 
         #region Implementation of IDbVersionManager
@@ -46,22 +58,23 @@ namespace CodeTitans.DbMigrator.Core.Versioning
 
         private static Task<bool> CheckIfTableExistsAsync(IDbExecutor executor, string tableName)
         {
-            var query = $"IF (OBJECT_ID('{tableName}', 'table') IS NULL)" +
-                        "     SELECT 0" +
-                        "ELSE SELECT 1";
+            var query = $"IF (OBJECT_ID('{tableName}', 'table') IS NULL)\r\n" +
+                        "     SELECT 0\r\n" +
+                        "ELSE SELECT 1\r\n";
 
             return executor.ExecuteScalarAsync<int>(query).ContinueWith(t => t.Result == 1);
         }
 
         private static Task CreateTable(IDbExecutor executor, string tableName, Version defaultVersion)
         {
-            var query = $"CREATE TABLE [{tableName}]" +
-                        "(" +
-                        "    Name nvarchar(20) NOT NULL PRIMARY KEY UNIQUE" +
-                        "    Value nvarchar(256) NOT NULL" +
-                        ");" +
-                        $"INSERT [{tableName}] (Name, Value) VALUES ('Version', '{defaultVersion}')";
+            var query = $"CREATE TABLE [{tableName}]\r\n" +
+                        "(\r\n" +
+                        "    Name nvarchar(20) NOT NULL PRIMARY KEY,\r\n" +
+                        "    Value nvarchar(256) NOT NULL\r\n" +
+                        ");\r\n\r\n" +
+                        $"INSERT [{tableName}] (Name, Value) VALUES ('Version', '{defaultVersion}')\r\n";
 
+            DebugLog.WriteLine("Initialized database version: " + defaultVersion);
             return executor.ExecuteNonQueryAsync(query);
         }
 
@@ -93,7 +106,9 @@ namespace CodeTitans.DbMigrator.Core.Versioning
                 {
                     // execute the real update:
                     var versionParam = new ScriptParam(ScriptParam.DatabaseNameParamVersion, version.ToString());
-                    var query = $"UPDATE [{_tableName}] SET Value = {versionParam.SqlParamName} WHERE Name = 'Version'";
+                    var query = $"UPDATE [{_tableName}] SET Value = {versionParam.SqlParamName} WHERE Name = 'Version'\r\n";
+
+                    DebugLog.WriteLine("Updating database version to: " + versionParam.Value);
                     await executor.ExecuteNonQueryAsync(query, new[] { versionParam });
                 }
             }
@@ -101,6 +116,12 @@ namespace CodeTitans.DbMigrator.Core.Versioning
             {
                 DebugLog.Write(ex);
             }
+        }
+
+        public Task OnSkippedAsync(IDbExecutor executor, MigrationScript script, int scriptBatchIndex, IEnumerable<ScriptParam> args)
+        {
+            _skipped++;
+            return Task.FromResult(true);
         }
 
         #endregion

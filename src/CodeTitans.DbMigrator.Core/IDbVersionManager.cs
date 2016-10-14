@@ -20,5 +20,10 @@ namespace CodeTitans.DbMigrator.Core
         /// If scripts are run inside the batch the index will keep increasing.
         /// </summary>
         Task UpdateAsync(IDbExecutor executor, MigrationScript script, int scriptBatchIndex, IEnumerable<ScriptParam> args);
+
+        /// <summary>
+        /// Notifies version manager, that given script was skipped after the version check.
+        /// </summary>
+        Task OnSkippedAsync(IDbExecutor executor, MigrationScript script, int scriptBatchIndex, IEnumerable<ScriptParam> args);
     }
 }

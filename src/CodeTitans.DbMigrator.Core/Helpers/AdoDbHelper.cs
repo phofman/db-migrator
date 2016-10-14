@@ -10,9 +10,9 @@ namespace CodeTitans.DbMigrator.Core.Helpers
     /// </summary>
     static class AdoNetDbHelper
     {
-        public static Task<object> ExecuteScalarQueryAsync(DbConnection connection, string statement, IEnumerable<ScriptParam> args)
+        public static Task<object> ExecuteScalarQueryAsync(DbConnection connection, DbTransaction transaction, string statement, IEnumerable<ScriptParam> args)
         {
-            var command = CreateTextCommand(connection, null, statement, args);
+            var command = CreateTextCommand(connection, transaction, statement, args);
             return command.ExecuteScalarAsync();
         }
 

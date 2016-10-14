@@ -24,7 +24,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
         /// <inheritdoc />
         public Task<T> ExecuteScalarAsync<T>(string statement, IEnumerable<ScriptParam> args = null)
         {
-            return AdoNetDbHelper.ExecuteScalarQueryAsync(_connection, statement, args).ContinueWith(t => (T) t.Result);
+            return AdoNetDbHelper.ExecuteScalarQueryAsync(_connection, _transaction, statement, args).ContinueWith(t => (T) t.Result);
         }
 
         /// <inheritdoc />
