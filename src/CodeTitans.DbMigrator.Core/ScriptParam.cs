@@ -17,6 +17,16 @@ namespace CodeTitans.DbMigrator.Core
         /// </summary>
         public const string DatabaseNameParamName = "DbName";
 
+        /// <summary>
+        /// Name of the parameter to specify database collation.
+        /// </summary>
+        public const string DatabaseCollation = "DbCollation";
+
+        /// <summary>
+        /// Name of the parameter to specify location on the disk.
+        /// </summary>
+        public const string DatabaseLocation = "DbLocation";
+
         #endregion
 
         private string _name;
