@@ -3,6 +3,7 @@
 .vs/
 CodeTitans.DbMigrator.sln.DotSettings.user
 src/CodeTitans.DbMigrator.Core/CodeTitans.DbMigrator.Core.csproj.user
+tests/UnitTests/UnitTests.csproj.user
 
 # build temporary files
 src/CodeTitans.DbMigrator.CLI/bin/

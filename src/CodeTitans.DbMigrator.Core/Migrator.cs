@@ -22,12 +22,12 @@ namespace CodeTitans.DbMigrator.Core
         /// <summary>
         /// Create new instance of the T-SQL migration worker.
         /// </summary>
-        public static IDbWorker CreateForTSql(string server, string user, string password)
+        public static IDbWorker CreateForTSql(string server, string database, string user, string password)
         {
             if (string.IsNullOrEmpty(server))
                 throw new ArgumentNullException(nameof(server));
 
-            return new DbTSqlWorker(server, user, password);
+            return new DbTSqlWorker(server, database, user, password);
         }
     }
 }

@@ -11,7 +11,7 @@ namespace UnitTests
         [TestMethod]
         public void CreateDatabaseFromScratch_with_success()
         {
-            var executor = Migrator.CreateForTSql("(localdb)\\thb", null, null);
+            var executor = Migrator.CreateForTSql("(localdb)\\thb", null, null, null);
             var args = new List<ScriptParam>();
             args.Add(new ScriptParam(ScriptParam.DatabaseNameParamName, "T1"));
             args.Add(new ScriptParam(ScriptParam.DatabaseNameParamVersion, "1.7"));
@@ -32,7 +32,7 @@ namespace UnitTests
 
             Assert.IsNotNull(scripts);
 
-            var executor = Migrator.CreateForTSql("(localdb)\\thb", null, null);
+            var executor = Migrator.CreateForTSql("(localdb)\\thb", null, null, null);
             var args = new List<ScriptParam>();
             args.Add(new ScriptParam(ScriptParam.DatabaseNameParamName, "CT-NewDb"));
 

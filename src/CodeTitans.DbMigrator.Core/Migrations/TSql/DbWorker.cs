@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 using CodeTitans.DbMigrator.Core.Helpers;
@@ -11,7 +12,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
     /// </summary>
     public sealed class DbTSqlWorker : IDbWorker
     {
-        private readonly string _connectionString;
+        private readonly SqlConnectionStringBuilder _connectionString;
 
         /// <summary>
         /// Intializes with specified connection string.
@@ -21,25 +22,58 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
             if (string.IsNullOrEmpty(connectinString))
                 throw new ArgumentNullException(nameof(connectinString));
 
-            _connectionString = connectinString;
+            _connectionString = new SqlConnectionStringBuilder(connectinString);
         }
 
         /// <summary>
         /// Initializes connection to specified server with given user and password.
         /// </summary>
-        public DbTSqlWorker(string server, string user, string password)
+        public DbTSqlWorker(string server, string database, string user, string password)
         {
             if (string.IsNullOrEmpty(server))
                 throw new ArgumentNullException(nameof(server));
 
+            _connectionString = new SqlConnectionStringBuilder();
+            _connectionString.DataSource = server;
+            if (!string.IsNullOrEmpty(database))
+            {
+                _connectionString.InitialCatalog = database;
+            }
+
+            // define user credentials:
             if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(password))
             {
-                _connectionString = $"Data Source={server};Integrated Security=True;";
+                _connectionString.IntegratedSecurity = true;
             }
             else
             {
-                _connectionString = $"Data Source={server};User Id={user};Password={password};";
+                _connectionString.UserID = user;
+                _connectionString.Password = password;
             }
+        }
+
+        private void UpdateWithDatabaseName(string name)
+        {
+            if (!string.IsNullOrEmpty(name))
+            {
+                _connectionString.InitialCatalog = name;
+            }
+        }
+
+        /// <summary>
+        /// Creates connection to the database.
+        /// </summary>
+        private DbConnection CreateConnection()
+        {
+            return new SqlConnection(_connectionString.ToString());
+        }
+
+        /// <summary>
+        /// Creates dedicated executor, matching the database worker.
+        /// </summary>
+        private IDbExecutor CreateExecutor(DbConnection connection, DbTransaction transaction)
+        {
+            return new DbTSqlExecutor(connection, transaction);
         }
 
         /// <summary>
@@ -51,7 +85,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                 return 0;
 
             int result = 0;
-            var connection = new SqlConnection(_connectionString);
+            var connection = CreateConnection();
             var scriptParams = ScriptParam.CreateDefaults(args, connection.DataSource, connection.Database);
 
             try
@@ -83,9 +117,9 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
             return result;
         }
 
-        private async Task<bool> ExecuteScriptAsync(SqlConnection connection, MigrationScript script, int currentIndex, int count, IEnumerable<ScriptParam> args, IDbVersionManager manager = null)
+        private async Task<bool> ExecuteScriptAsync(DbConnection connection, MigrationScript script, int currentIndex, int count, IEnumerable<ScriptParam> args, IDbVersionManager manager = null)
         {
-            SqlTransaction transaction = null;
+            DbTransaction transaction = null;
             string currentStatement = null;
             IDbExecutor executor = null;
 
@@ -94,11 +128,11 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                 DebugLog.Write(string.Format("Preparing {0}/{1} - {2} ({3})", currentIndex + 1, count, script.Name, script.RelativePath ?? "no path"));
                 script.Load(args);
 
-                transaction = script.Contains("CREATE DATABASE") ? null : connection.BeginTransaction("DbMigrator");
+                transaction = script.Contains("CREATE DATABASE") ? null : connection.BeginTransaction();
 
                 if (manager != null && transaction != null)
                 {
-                    executor = new DbTSqlExecutor(connection, transaction);
+                    executor = CreateExecutor(connection, transaction);
 
                     // check the current database version:
                     var version = await manager.GetVersionAsync(executor);
@@ -135,7 +169,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                 {
                     if (executor == null)
                     {
-                        executor = new DbTSqlExecutor(connection, transaction);
+                        executor = CreateExecutor(connection, transaction);
                     }
 
                     await manager.UpdateAsync(executor, script, currentIndex, args);
@@ -228,7 +262,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
             if (string.IsNullOrEmpty(database))
                 throw new ArgumentNullException(nameof(database));
 
-            var connection = new SqlConnection(_connectionString);
+            var connection = CreateConnection();
             var args = new[] { new ScriptParam(ScriptParam.DatabaseNameParamName, database) };
             try
             {
@@ -267,13 +301,13 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
             if (manager == null)
                 throw new ArgumentNullException(nameof(manager));
 
-            var connection = new SqlConnection(_connectionString);
+            var connection = CreateConnection();
 
             try
             {
                 await connection.OpenAsync();
 
-                var executor = new DbTSqlExecutor(connection, null);
+                var executor = CreateExecutor(connection, null);
                 var version = await manager.GetVersionAsync(executor);
 
                 if (version != null)
@@ -307,13 +341,13 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
             if (version == null)
                 throw new ArgumentNullException(nameof(version));
 
-            var connection = new SqlConnection(_connectionString);
+            var connection = CreateConnection();
 
             try
             {
                 await connection.OpenAsync();
 
-                var executor = new DbTSqlExecutor(connection, null);
+                var executor = CreateExecutor(connection, null);
                 var updated = await manager.UpdateAsync(executor, null, -1, new[] { new ScriptParam(ScriptParam.DatabaseNameParamVersion, version.ToString()) });
 
                 if (updated)
@@ -344,7 +378,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
         /// </summary>
         public async Task<T> ExecuteScalarAsync<T>(string statement, IEnumerable<ScriptParam> args = null)
         {
-            var connection = new SqlConnection(_connectionString);
+            var connection = CreateConnection();
 
             try
             {
