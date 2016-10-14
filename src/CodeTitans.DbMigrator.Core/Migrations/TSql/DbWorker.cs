@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 using CodeTitans.DbMigrator.Core.Helpers;
 
-namespace CodeTitans.DbMigrator.Core.Migrations
+namespace CodeTitans.DbMigrator.Core.Migrations.TSql
 {
     /// <summary>
     /// Worker class to connect to dabase and perform special actions.

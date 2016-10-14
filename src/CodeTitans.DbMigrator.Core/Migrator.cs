@@ -1,5 +1,5 @@
 ﻿using System;
-using CodeTitans.DbMigrator.Core.Migrations;
+using CodeTitans.DbMigrator.Core.Migrations.TSql;
 
 namespace CodeTitans.DbMigrator.Core
 {

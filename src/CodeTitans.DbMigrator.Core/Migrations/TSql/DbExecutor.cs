@@ -3,7 +3,7 @@ using System.Data.Common;
 using System.Threading.Tasks;
 using CodeTitans.DbMigrator.Core.Helpers;
 
-namespace CodeTitans.DbMigrator.Core.Migrations
+namespace CodeTitans.DbMigrator.Core.Migrations.TSql
 {
     sealed class DbTSqlExecutor : IDbExecutor
     {

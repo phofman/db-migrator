@@ -42,8 +42,8 @@
   <ItemGroup>
     <Compile Include="Helpers\AdoDbHelper.cs" />
     <Compile Include="IDbVersionManager.cs" />
-    <Compile Include="Migrations\DbTSqlExecutor.cs" />
-    <Compile Include="Migrations\DbTSqlWorker.cs" />
+    <Compile Include="Migrations\TSql\DbExecutor.cs" />
+    <Compile Include="Migrations\TSql\DbWorker.cs" />
     <Compile Include="DebugLog.cs" />
     <Compile Include="IDbExecutor.cs" />
     <Compile Include="IDbWorker.cs" />
