@@ -13,6 +13,11 @@ namespace CodeTitans.DbMigrator.Core
         #region Predefined Parameter Names
 
         /// <summary>
+        /// Name of the parameter that holds the name of the database server.
+        /// </summary>
+        public const string DatabaseNameParamServer = "DbServer";
+
+        /// <summary>
         /// Name of the parameter that holds the name of the database.
         /// </summary>
         public const string DatabaseNameParamName = "DbName";
@@ -143,11 +148,11 @@ namespace CodeTitans.DbMigrator.Core
             scriptParams.Add(new ScriptParam("AppVersion", GetCurrentVersion()));
             if (!string.IsNullOrWhiteSpace(databaseServer))
             {
-                scriptParams.Add(new ScriptParam("DbServer", databaseServer));
+                scriptParams.Add(new ScriptParam(DatabaseNameParamServer, databaseServer));
             }
             if (!string.IsNullOrWhiteSpace(databaseName))
             {
-                scriptParams.Add(new ScriptParam("DbName", databaseName));
+                scriptParams.Add(new ScriptParam(DatabaseNameParamName, databaseName));
             }
 
             // copy source items:

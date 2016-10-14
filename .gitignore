@@ -1,6 +1,7 @@
 
 # Visual Studio metadata
 .vs/
+CodeTitans.DbMigrator.sln.DotSettings.user
 
 # build temporary files
 src/CodeTitans.DbMigrator.CLI/bin/
