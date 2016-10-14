@@ -33,5 +33,20 @@ namespace CodeTitans.DbMigrator.Core
         /// Executes specified set of migration scripts over the database.
         /// </summary>
         Task<int> ExecuteAsync(IReadOnlyCollection<MigrationScript> scripts, IEnumerable<ScriptParam> args = null, IDbVersionManager manager = null);
+
+        /// <summary>
+        /// Executes scalar query to database.
+        /// </summary>
+        Task<T> ExecuteScalarAsync<T>(string statement, IEnumerable<ScriptParam> args = null);
+
+        /// <summary>
+        /// Gets the current version of the database.
+        /// </summary>
+        Task<Version> GetVersionAsync(IDbVersionManager manager);
+
+        /// <summary>
+        /// Sets the version of the database.
+        /// </summary>
+        Task<bool> SetVersionAsync(IDbVersionManager manager, Version version);
     }
 }

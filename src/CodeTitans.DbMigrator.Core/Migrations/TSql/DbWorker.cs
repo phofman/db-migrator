@@ -260,6 +260,85 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
             }
         }
 
+
+        /// <inheritdoc />
+        public async Task<Version> GetVersionAsync(IDbVersionManager manager)
+        {
+            if (manager == null)
+                throw new ArgumentNullException(nameof(manager));
+
+            var connection = new SqlConnection(_connectionString);
+
+            try
+            {
+                await connection.OpenAsync();
+
+                var executor = new DbTSqlExecutor(connection, null);
+                var version = await manager.GetVersionAsync(executor);
+
+                if (version != null)
+                {
+                    DebugLog.WriteLine("Database version: " + version);
+                }
+                else
+                {
+                    DebugLog.WriteLine("Failed to obtain database version");
+                }
+
+                return version;
+            }
+            catch (Exception ex)
+            {
+                DebugLog.WriteLine("Failure during loading database version");
+                DebugLog.Write(ex);
+                return null;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> SetVersionAsync(IDbVersionManager manager, Version version)
+        {
+            if (manager == null)
+                throw new ArgumentNullException(nameof(manager));
+            if (version == null)
+                throw new ArgumentNullException(nameof(version));
+
+            var connection = new SqlConnection(_connectionString);
+
+            try
+            {
+                await connection.OpenAsync();
+
+                var executor = new DbTSqlExecutor(connection, null);
+                var updated = await manager.UpdateAsync(executor, null, -1, new[] { new ScriptParam(ScriptParam.DatabaseNameParamVersion, version.ToString()) });
+
+                if (updated)
+                {
+                    DebugLog.WriteLine("Updated database version to: " + version);
+                }
+                else
+                {
+                    DebugLog.WriteLine("Failed to update database version");
+                }
+
+                return updated;
+            }
+            catch (Exception ex)
+            {
+                DebugLog.WriteLine("Failure during database version update");
+                DebugLog.Write(ex);
+                return false;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
         /// <summary>
         /// Executes scalar query to database.
         /// </summary>

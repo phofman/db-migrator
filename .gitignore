@@ -2,6 +2,7 @@
 # Visual Studio metadata
 .vs/
 CodeTitans.DbMigrator.sln.DotSettings.user
+src/CodeTitans.DbMigrator.Core/CodeTitans.DbMigrator.Core.csproj.user
 
 # build temporary files
 src/CodeTitans.DbMigrator.CLI/bin/
