@@ -11,20 +11,20 @@ namespace CodeTitans.DbMigrator.Core.Versioning
     {
         private readonly Version _defaultVersion;
         private readonly string _tableName;
-        private int _skipped;
+        private int _skippedCounter;
 
         public DefaultSettingsVersioning(string tableName = null, Version defaultVersion = null)
         {
             _defaultVersion = defaultVersion ?? new Version(1, 0);
-            _tableName = tableName ?? "Settings";
+            _tableName = tableName ?? "GlobalSettings";
         }
 
         /// <summary>
         /// Gets the number of skipped scripts.
         /// </summary>
-        public int Skipped
+        public int SkippedCounter
         {
-            get { return _skipped; }
+            get { return _skippedCounter; }
         }
 
         #region Implementation of IDbVersionManager
@@ -79,7 +79,7 @@ namespace CodeTitans.DbMigrator.Core.Versioning
         }
 
         /// <inheritdoc />
-        public async Task UpdateAsync(IDbExecutor executor, MigrationScript script, int scriptBatchIndex, IEnumerable<ScriptParam> args)
+        public async Task<bool> UpdateAsync(IDbExecutor executor, MigrationScript script, int scriptBatchIndex, IEnumerable<ScriptParam> args)
         {
             var version = script != null ? script.Version : null;
             if (version == null)
@@ -111,16 +111,20 @@ namespace CodeTitans.DbMigrator.Core.Versioning
                     DebugLog.WriteLine("Updating database version to: " + versionParam.Value);
                     await executor.ExecuteNonQueryAsync(query, new[] { versionParam });
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 DebugLog.Write(ex);
+                return false;
             }
         }
 
+        /// <inheritdoc />
         public Task OnSkippedAsync(IDbExecutor executor, MigrationScript script, int scriptBatchIndex, IEnumerable<ScriptParam> args)
         {
-            _skipped++;
+            _skippedCounter++;
             return Task.FromResult(true);
         }
 
