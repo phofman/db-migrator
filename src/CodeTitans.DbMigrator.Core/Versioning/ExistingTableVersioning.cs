@@ -9,13 +9,14 @@ namespace CodeTitans.DbMigrator.Core.Versioning
     /// </summary>
     public class ExistingTableVersioning : IDbVersionManager
     {
+        private readonly bool _failOnNonExistance;
         private readonly string _tableName;
         private readonly string _columnName;
 
         /// <summary>
         /// Init constructor.
         /// </summary>
-        public ExistingTableVersioning(string tableName, string columnName)
+        public ExistingTableVersioning(string tableName, string columnName, bool failOnNonExistance = true)
         {
             if (string.IsNullOrEmpty(tableName))
                 throw new ArgumentNullException(nameof(tableName));
@@ -24,6 +25,7 @@ namespace CodeTitans.DbMigrator.Core.Versioning
 
             _tableName = tableName;
             _columnName = columnName;
+            _failOnNonExistance = failOnNonExistance;
         }
 
         /// <inheritdoc />
@@ -31,12 +33,15 @@ namespace CodeTitans.DbMigrator.Core.Versioning
         {
             var exists = await executor.CheckIfTableExistsAsync(_tableName);
             if (!exists)
-                return null;
+                return _failOnNonExistance ? null : new Version(0, 0, 0, 0);
 
             try
             {
                 var query = $"SELECT TOP 1 [{_columnName}] AS Version FROM [{_tableName}]";
                 var versionString = await executor.ExecuteScalarAsync<string>(query);
+
+                if (string.IsNullOrEmpty(versionString))
+                    return _failOnNonExistance ? null : new Version(0, 0, 0, 0);
 
                 return new Version(versionString);
             }

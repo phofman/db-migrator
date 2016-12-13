@@ -43,8 +43,8 @@ namespace UnitTests
 
             var executor = Migrator.CreateForTSql("(localdb)\\thb", null, null, null);
             var args = new List<ScriptParam>();
-            args.Add(new ScriptParam(ScriptParam.DatabaseNameParamName, "CT-NewDb"));
-            args.Add(new ScriptParam(ScriptParam.DatabaseNameParamVersion, VersionString));
+            args.Add(new ScriptParam(ScriptParam.DatabaseNameParamName, "PustaBaza"));
+            //args.Add(new ScriptParam(ScriptParam.DatabaseNameParamVersion, VersionString));
 
             // drop existing database...
             var removed = executor.DropDatabase(args).Result;
@@ -52,12 +52,19 @@ namespace UnitTests
 
             // and create the new one...
             var versioning = new DefaultSettingsVersioning();
+                //new ExistingTableVersioning("KonfiguracjaSystemu", "WersjaDB", false);
             var count = executor.ExecuteAsync(scripts, args, versioning).Result;
             Assert.AreEqual(scripts.Count, count, "Too few scripts executed");
             //Assert.AreEqual(0, versioning.Skipped, "Should not skip any scripts");
 
             var currentVersion = executor.GetVersionAsync(versioning).Result;
-            Assert.AreEqual(new Version(VersionString), currentVersion);
+            Assert.IsTrue(currentVersion > new Version(0, 0));
+
+            // if enforced the version:
+            if (ScriptParam.Find(args, ScriptParam.DatabaseNameParamVersion) != null)
+            {
+                Assert.AreEqual(new Version(VersionString), currentVersion);
+            }
         }
     }
 }
