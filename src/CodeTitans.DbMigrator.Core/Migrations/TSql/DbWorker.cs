@@ -126,6 +126,12 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                     }
                 }
 
+                // keep remembering the name of the database:
+                if (string.IsNullOrEmpty(_connectionString.InitialCatalog) && !string.IsNullOrEmpty(connection.Database))
+                {
+                    _connectionString.InitialCatalog = connection.Database;
+                }
+
                 // update the database version, if specified:
                 if (manager != null)
                 {
@@ -135,11 +141,6 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                         bool skipUpdate = await EnsureHasDatabase(connection, null, args);
                         if (!skipUpdate)
                         {
-                            if (string.IsNullOrEmpty(_connectionString.InitialCatalog) && !string.IsNullOrEmpty(connection.Database))
-                            {
-                                _connectionString.InitialCatalog = connection.Database;
-                            }
-
                             var executor = CreateExecutor(connection, null);
                             await manager.UpdateAsync(executor, new Version(versionParam.Value), -1);
                         }
@@ -213,7 +214,6 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                 if (manager != null)
                 {
                     bool skipUpdate = await EnsureHasDatabase(connection, transaction, args);
-
                     if (!skipUpdate)
                     {
                         if (executor == null)
