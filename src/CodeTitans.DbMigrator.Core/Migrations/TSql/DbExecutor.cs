@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading.Tasks;
 using CodeTitans.DbMigrator.Core.Helpers;
@@ -20,6 +21,19 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
         }
 
         #region Implementation of IDbExecutor
+
+        /// <inheritdoc />
+        public Task<bool> CheckIfTableExistsAsync(string tableName)
+        {
+            if (string.IsNullOrEmpty(tableName))
+                throw new ArgumentNullException(nameof(tableName));
+
+            var query = $"IF (OBJECT_ID('{tableName}', 'table') IS NULL)\r\n" +
+                        "     SELECT 0\r\n" +
+                        "ELSE SELECT 1\r\n";
+
+            return ExecuteScalarAsync<int>(query).ContinueWith(t => t.Result == 1);
+        }
 
         /// <inheritdoc />
         public Task<T> ExecuteScalarAsync<T>(string statement, IEnumerable<ScriptParam> args = null)

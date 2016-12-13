@@ -9,6 +9,11 @@ namespace CodeTitans.DbMigrator.Core
     public interface IDbExecutor
     {
         /// <summary>
+        /// Gets an indication, if specified table exists.
+        /// </summary>
+        Task<bool> CheckIfTableExistsAsync(string tableName);
+
+        /// <summary>
         /// Executes scalar query to database.
         /// </summary>
         Task<T> ExecuteScalarAsync<T>(string statement, IEnumerable<ScriptParam> args = null);

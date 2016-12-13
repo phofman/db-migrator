@@ -37,7 +37,7 @@ namespace CodeTitans.DbMigrator.Core.Versioning
 
             try
             {
-                var exists = await CheckIfTableExistsAsync(executor, _tableName);
+                var exists = await executor.CheckIfTableExistsAsync(_tableName);
                 if (!exists)
                 {
                     await CreateTable(executor, _tableName, _defaultVersion);
@@ -54,15 +54,6 @@ namespace CodeTitans.DbMigrator.Core.Versioning
                 DebugLog.Write(ex);
                 return null;
             }
-        }
-
-        private static Task<bool> CheckIfTableExistsAsync(IDbExecutor executor, string tableName)
-        {
-            var query = $"IF (OBJECT_ID('{tableName}', 'table') IS NULL)\r\n" +
-                        "     SELECT 0\r\n" +
-                        "ELSE SELECT 1\r\n";
-
-            return executor.ExecuteScalarAsync<int>(query).ContinueWith(t => t.Result == 1);
         }
 
         private static Task CreateTable(IDbExecutor executor, string tableName, Version defaultVersion)
@@ -97,7 +88,7 @@ namespace CodeTitans.DbMigrator.Core.Versioning
 
             try
             {
-                var exists = await CheckIfTableExistsAsync(executor, _tableName);
+                var exists = await executor.CheckIfTableExistsAsync(_tableName);
                 if (!exists)
                 {
                     await CreateTable(executor, _tableName, version);
