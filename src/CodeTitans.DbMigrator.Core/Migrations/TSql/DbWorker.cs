@@ -141,7 +141,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                             }
 
                             var executor = CreateExecutor(connection, null);
-                            await manager.UpdateAsync(executor, null, -1, new[] { versionParam });
+                            await manager.UpdateAsync(executor, new Version(versionParam.Value), -1);
                         }
                     }
                 }
@@ -221,7 +221,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                             executor = CreateExecutor(connection, transaction);
                         }
 
-                        await manager.UpdateAsync(executor, script, currentIndex, args);
+                        await manager.UpdateAsync(executor, script.Version, currentIndex);
                     }
                 }
 
@@ -408,7 +408,7 @@ namespace CodeTitans.DbMigrator.Core.Migrations.TSql
                 await connection.OpenAsync();
 
                 var executor = CreateExecutor(connection, null);
-                var updated = await manager.UpdateAsync(executor, null, -1, new[] { new ScriptParam(ScriptParam.DatabaseNameParamVersion, version.ToString()) });
+                var updated = await manager.UpdateAsync(executor, version, -1);
 
                 if (updated)
                 {

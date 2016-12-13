@@ -70,21 +70,10 @@ namespace CodeTitans.DbMigrator.Core.Versioning
         }
 
         /// <inheritdoc />
-        public async Task<bool> UpdateAsync(IDbExecutor executor, MigrationScript script, int scriptBatchIndex, IEnumerable<ScriptParam> args)
+        public async Task<bool> UpdateAsync(IDbExecutor executor, Version version, int scriptBatchIndex)
         {
-            var version = script != null ? script.Version : null;
             if (version == null)
-            {
-                var v = ScriptParam.FindValue(args, ScriptParam.DatabaseNameParamVersion);
-                if (v != null)
-                {
-                    version = new Version(v);
-                }
-            }
-
-            // inform about invalid version:
-            if (version == null)
-                throw new ArgumentOutOfRangeException(nameof(args));
+                throw new ArgumentOutOfRangeException(nameof(version));
 
             try
             {

@@ -48,7 +48,7 @@ namespace CodeTitans.DbMigrator.Core.Versioning
         }
 
         /// <inheritdoc />
-        public Task<bool> UpdateAsync(IDbExecutor executor, MigrationScript script, int scriptBatchIndex, IEnumerable<ScriptParam> args)
+        public Task<bool> UpdateAsync(IDbExecutor executor, Version version, int scriptBatchIndex)
         {
             throw new NotImplementedException();
         }
