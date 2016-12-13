@@ -35,7 +35,7 @@ namespace CodeTitans.DbMigrator.Core.Versioning
 
             try
             {
-                var query = $"SELECT [{_columnName}] AS Version FROM [{_tableName}]";
+                var query = $"SELECT TOP 1 [{_columnName}] AS Version FROM [{_tableName}]";
                 var versionString = await executor.ExecuteScalarAsync<string>(query);
 
                 return new Version(versionString);
@@ -48,9 +48,33 @@ namespace CodeTitans.DbMigrator.Core.Versioning
         }
 
         /// <inheritdoc />
-        public Task<bool> UpdateAsync(IDbExecutor executor, Version version, int scriptBatchIndex)
+        public async Task<bool> UpdateAsync(IDbExecutor executor, Version version, int scriptBatchIndex)
         {
-            throw new NotImplementedException();
+            if (version == null)
+                throw new ArgumentOutOfRangeException(nameof(version));
+
+            try
+            {
+                var exists = await executor.CheckIfTableExistsAsync(_tableName);
+                if (!exists)
+                {
+                    return false;
+                }
+
+                // execute the real update:
+                var versionParam = new ScriptParam(ScriptParam.DatabaseNameParamVersion, version.ToString());
+                var query = $"UPDATE [{_tableName}] SET [{_columnName}] = {versionParam.SqlParamName}\r\n";
+
+                DebugLog.WriteLine("Updating database version to: " + versionParam.Value);
+                await executor.ExecuteNonQueryAsync(query, new[] { versionParam });
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DebugLog.Write(ex);
+                return false;
+            }
         }
 
         /// <inheritdoc />
