@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using CodeTitans.DbMigrator.Core.Migrations.TSql;
 
 namespace CodeTitans.DbMigrator.Core
@@ -28,6 +29,22 @@ namespace CodeTitans.DbMigrator.Core
                 throw new ArgumentNullException(nameof(server));
 
             return new DbTSqlWorker(server, database, user, password);
+        }
+
+        /// <summary>
+        /// Initializes collection of script parameters.
+        /// </summary>
+        public static List<ScriptParam> InitParams(string databaseName, string databaseVersion = null)
+        {
+            var result = new List<ScriptParam>();
+
+            if (!string.IsNullOrEmpty(databaseName))
+            {
+                result.Add(new ScriptParam(ScriptParam.DatabaseNameParamName, databaseName));
+                result.Add(new ScriptParam(ScriptParam.DatabaseNameParamVersion, databaseVersion));
+            }
+
+            return result;
         }
     }
 }
