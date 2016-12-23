@@ -9,29 +9,52 @@ namespace CodeTitans.DbMigrator.Core.Filters
     public sealed class RegexFilter : IScriptFilter
     {
         private readonly Regex[] _filters;
+        private readonly int[] _acceptedLevels;
 
         /// <summary>
         /// Init constructor.
         /// </summary>
-        public RegexFilter(string[] filters)
+        public RegexFilter(string[] filters, int[] acceptedLevels = null)
         {
-            if (filters == null || filters.Length == 0)
-                throw new ArgumentNullException(nameof(filters));
-
-            _filters = new Regex[filters.Length];
-            for (int i = 0; i < filters.Length; i++)
+            if (acceptedLevels != null && acceptedLevels.Length > 0)
             {
-                _filters[i] = new Regex(filters[i], RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                _acceptedLevels = acceptedLevels;
+                Array.Sort(_acceptedLevels);
+            }
+
+            if (filters != null && filters.Length > 0)
+            {
+                _filters = new Regex[filters.Length];
+                for (int i = 0; i < filters.Length; i++)
+                {
+                    _filters[i] = new Regex(filters[i], RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                }
             }
         }
 
         /// <inheritdoc />
         public bool Match(string name, Version version, int level)
         {
-            foreach (var r in _filters)
+            // verify level:
+            if (_acceptedLevels != null)
             {
-                if (r.IsMatch(name))
-                    return true;
+                foreach (var l in _acceptedLevels)
+                {
+                    if (l == level)
+                        return true;
+                    if (l > level)
+                        break;
+                }
+            }
+
+            // verify name filter:
+            if (_filters != null)
+            {
+                foreach (var r in _filters)
+                {
+                    if (r.IsMatch(name))
+                        return true;
+                }
             }
 
             return false;

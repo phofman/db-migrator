@@ -29,12 +29,15 @@ namespace CodeTitans.DbMigrator.Core
         /// <summary>
         /// Scans specified folder and its subfolders looking for migration scripts.
         /// </summary>
-        public static IReadOnlyCollection<MigrationScript> LoadScripts(string path, string[] regexFilters)
+        public static IReadOnlyCollection<MigrationScript> LoadScripts(string path, string[] regexFilters, int[] acceptedLevels)
         {
             if (string.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
-            return LoadScripts(path, regexFilters != null && regexFilters.Length > 0 ? new RegexFilter(regexFilters) : null);
+            var filter = (regexFilters != null && regexFilters.Length > 0)
+                || (acceptedLevels != null && acceptedLevels.Length > 0) ? new RegexFilter(regexFilters, acceptedLevels) : null;
+
+            return LoadScripts(path, filter);
         }
 
         /// <summary>
