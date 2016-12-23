@@ -71,8 +71,27 @@ namespace CodeTitans.DbMigrator.Core
 
             if (TryParseName(Path.GetFileNameWithoutExtension(path), out version, out versionParts, out name))
             {
-                result.Add(new MigrationScript(Merge(currentLevelVersion, version, level), name, path, relativePath));
+                var itemVersion = Merge(currentLevelVersion, version, level);
+
+                if (Contains(result, itemVersion))
+                    throw new InvalidOperationException("Script with identical version (" + itemVersion + ") already exists (" + path + ")");
+
+                result.Add(new MigrationScript(itemVersion, name, path, relativePath));
             }
+        }
+
+        private static bool Contains(List<MigrationScript> list, Version version)
+        {
+            if (list == null || version == null)
+                return false;
+
+            foreach (var i in list)
+            {
+                if (i.Version == version)
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>
