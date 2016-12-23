@@ -40,8 +40,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Filters\FuncFilter.cs" />
     <Compile Include="Helpers\AdoDbHelper.cs" />
     <Compile Include="IDbVersionManager.cs" />
+    <Compile Include="IScriptFilter.cs" />
     <Compile Include="Migrations\TSql\DbExecutor.cs" />
     <Compile Include="Migrations\TSql\DbWorker.cs" />
     <Compile Include="DebugLog.cs" />
@@ -50,6 +52,7 @@
     <Compile Include="MigrationScript.cs" />
     <Compile Include="Migrator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Filters\RegexFilter.cs" />
     <Compile Include="Scanner.cs" />
     <Compile Include="ScriptParam.cs" />
     <Compile Include="Versioning\DefaultSettingsVersioning.cs" />

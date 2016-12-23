@@ -68,7 +68,7 @@ namespace UnitTests
         [TestMethod]
         public void ScanTree_with_success()
         {
-            var scripts = Scanner.LoadScripts(@"T:\thb\playground\sezam\THB.Ewidencja.DB\Skrypty", (name, level) => level < 1 || string.Compare(name, "procedury", StringComparison.OrdinalIgnoreCase) == 0);
+            var scripts = Scanner.LoadScripts(@"T:\thb\playground\sezam\THB.Ewidencja.DB\Skrypty", (name, version, level) => level < 1 || string.Compare(name, "procedury", StringComparison.OrdinalIgnoreCase) == 0);
 
             Assert.IsNotNull(scripts);
         }

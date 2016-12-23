@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using CodeTitans.DbMigrator.Core.Filters;
 
 namespace CodeTitans.DbMigrator.Core
 {
@@ -13,19 +14,41 @@ namespace CodeTitans.DbMigrator.Core
         /// <summary>
         /// Scans specified folder and its subfolders looking for migration scripts.
         /// </summary>
-        public static IReadOnlyCollection<MigrationScript> LoadScripts(string path, Func<string, int, bool> filter = null)
+        public static IReadOnlyCollection<MigrationScript> LoadScripts(string path, IScriptFilter filter = null)
         {
             if (string.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
             List<MigrationScript> result = new List<MigrationScript>();
-            LoadScripts(result, path, path.Length + 1, new Version(0,0), 0, filter);
+            LoadScripts(result, path, path.Length + 1, new Version(0, 0), 0, filter);
 
             result.Sort();
             return result.Count > 0 ? result.ToArray() : null;
         }
 
-        private static void LoadScripts(List<MigrationScript> result, string path, int relativePathPrefixLength, Version currentLevelVersion, int level, Func<string, int, bool> filter)
+        /// <summary>
+        /// Scans specified folder and its subfolders looking for migration scripts.
+        /// </summary>
+        public static IReadOnlyCollection<MigrationScript> LoadScripts(string path, string[] regexFilters)
+        {
+            if (string.IsNullOrEmpty(path))
+                throw new ArgumentNullException(nameof(path));
+
+            return LoadScripts(path, regexFilters != null && regexFilters.Length > 0 ? new RegexFilter(regexFilters) : null);
+        }
+
+        /// <summary>
+        /// Scans specified folder and its subfolders looking for migration scripts.
+        /// </summary>
+        public static IReadOnlyCollection<MigrationScript> LoadScripts(string path, Func<string, Version, int, bool> filter)
+        {
+            if (string.IsNullOrEmpty(path))
+                throw new ArgumentNullException(nameof(path));
+
+            return LoadScripts(path, filter != null ? new FuncFilter(filter) : null);
+        }
+
+        private static void LoadScripts(List<MigrationScript> result, string path, int relativePathPrefixLength, Version currentLevelVersion, int level, IScriptFilter filter)
         {
             // is it a single file?
             if (File.Exists(path))
@@ -52,10 +75,12 @@ namespace CodeTitans.DbMigrator.Core
                         // get their names and version parts:
                         if (TryParseName(Path.GetFileName(dir), out version, out versionParts, out name))
                         {
+                            var currentVersion = Merge(currentLevelVersion, version, level);
+
                             // filter:
-                            if (filter == null || filter(name, level))
+                            if (filter == null || filter.Match(name, currentVersion, level))
                             {
-                                LoadScripts(result, dir, relativePathPrefixLength, Merge(currentLevelVersion, version, level), level + versionParts, filter);
+                                LoadScripts(result, dir, relativePathPrefixLength, currentVersion, level + versionParts, filter);
                             }
                         }
                     }
