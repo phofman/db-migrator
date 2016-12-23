@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using CodeTitans.DbMigrator.Core;
 using CodeTitans.DbMigrator.Core.Versioning;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -16,9 +15,7 @@ namespace UnitTests
             const string dbName = "T1";
 
             var executor = Migrator.CreateForTSql("(localdb)\\thb", null, null, null);
-            var args = new List<ScriptParam>();
-            args.Add(new ScriptParam(ScriptParam.DatabaseNameParamName, dbName));
-            args.Add(new ScriptParam(ScriptParam.DatabaseNameParamVersion, versionString));
+            var args = Migrator.InitParams(dbName, versionString);
 
             // drop existing database:
             var removed = executor.DropDatabase(args).Result;
@@ -37,13 +34,12 @@ namespace UnitTests
         public void CreateDatabase_with_success()
         {
             var scripts = Scanner.LoadScripts(@"T:\thb\playground\sezam\THB.Ewidencja.DB\Skrypty");
-            const string VersionString = "4.45";
+            const string VersionString = "4.5";
 
             Assert.IsNotNull(scripts);
 
             var executor = Migrator.CreateForTSql("(localdb)\\thb", null, null, null);
-            var args = new List<ScriptParam>();
-            args.Add(new ScriptParam(ScriptParam.DatabaseNameParamName, "PustaBaza"));
+            var args = Migrator.InitParams("PustaBaza");
             //args.Add(new ScriptParam(ScriptParam.DatabaseNameParamVersion, VersionString));
 
             // drop existing database...
@@ -51,9 +47,8 @@ namespace UnitTests
             Assert.IsTrue(removed, "Failed to drop database");
 
             // and create the new one...
-            var versioning = new DefaultSettingsVersioning();
-                //new ExistingTableVersioning("KonfiguracjaSystemu", "WersjaDB", false);
-            var count = executor.ExecuteAsync(scripts, args, versioning).Result;
+            var versioning = new ExistingTableVersioning("KonfiguracjaSystemu", "WersjaDB", false);
+            var count = executor.ExecuteAsync(scripts, args, null).Result;
             Assert.AreEqual(scripts.Count, count, "Too few scripts executed");
             //Assert.AreEqual(0, versioning.Skipped, "Should not skip any scripts");
 
