@@ -30,17 +30,15 @@ namespace CodeTitans.DbMigrator.CLI
 
             switch (e.Action)
             {
-                case "info":
-                case "help":
+                case ActionRequest.Help:
                     PrintHelpInfo();
                     return;
 
-                case "app_ver":
-                case "app_version":
+                case ActionRequest.AppVersion:
                     Console.WriteLine(Arguments.AppVersion);
                     return;
 
-                case "scan":
+                case ActionRequest.Scan:
                     Console.WriteLine("Scanning for scripts...");
                     Scan(e.ScriptsPath, e.ScriptFilters, e.ScriptLevels, e.Format);
                     return;

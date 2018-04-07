@@ -8,7 +8,7 @@ namespace CodeTitans.DbMigrator.CLI
     {
         #region Properties
 
-        public string Action
+        public ActionRequest Action
         {
             get;
             private set;
@@ -52,7 +52,7 @@ namespace CodeTitans.DbMigrator.CLI
 
         #endregion
 
-        public static Arguments Parse(string[] args)
+        public static Arguments Parse(params string[] args)
         {
             if (args == null)
                 throw new ArgumentNullException(nameof(args));
@@ -66,11 +66,13 @@ namespace CodeTitans.DbMigrator.CLI
             var filters = new List<string>();
             var levels = new List<int>();
 
+            result.Action = ActionRequest.Execute;
+
             foreach (var a in args)
             {
                 if (a.StartsWith("/action:"))
                 {
-                    result.Action = GetStringValue(a, 8).ToLowerInvariant();
+                    result.Action = GetActionRequest(GetStringValue(a, 8));
                     continue;
                 }
 
@@ -99,15 +101,33 @@ namespace CodeTitans.DbMigrator.CLI
                 }
             }
 
-            // set the default action, in case not specified via arguments...
-            if (string.IsNullOrEmpty(result.Action))
-            {
-                result.Action = "update";
-            }
-
             result.ScriptFilters = filters.ToArray();
             result.ScriptLevels = levels.ToArray();
             return result;
+        }
+
+        private static ActionRequest GetActionRequest(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return ActionRequest.Help;
+
+            var clearedText = text.Trim();
+            ActionRequest result;
+
+            if (Enum.TryParse(clearedText, true, out result))
+            {
+                return result;
+            }
+
+            if (string.Compare(clearedText, "info", StringComparison.InvariantCultureIgnoreCase) == 0)
+                return ActionRequest.Help;
+
+            if (string.Compare(clearedText, "app_ver", StringComparison.InvariantCultureIgnoreCase) == 0)
+                return ActionRequest.Version;
+            if (string.Compare(clearedText, "app_version", StringComparison.InvariantCultureIgnoreCase) == 0)
+                return ActionRequest.Version;
+
+            throw new ArgumentException("Invalid value \"" + text + "\" specified for 'action' parameter");
         }
 
         private static PrintFormat GetPrintFormat(string text)
