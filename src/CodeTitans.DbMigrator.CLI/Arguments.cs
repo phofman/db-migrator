@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using CodeTitans.DbMigrator.Core.Helpers;
 
 namespace CodeTitans.DbMigrator.CLI
 {
@@ -65,38 +66,39 @@ namespace CodeTitans.DbMigrator.CLI
             var result = new Arguments();
             var filters = new List<string>();
             var levels = new List<int>();
+            string value;
 
             result.Action = ActionRequest.Execute;
 
             foreach (var a in args)
             {
-                if (a.StartsWith("/action:"))
+                if (StringHelper.IsOption(a, "action", out value))
                 {
-                    result.Action = GetActionRequest(GetStringValue(a, 8));
+                    result.Action = GetActionRequest(StringHelper.GetStringValue(value));
                     continue;
                 }
 
-                if (a.StartsWith("/filter:"))
+                if (StringHelper.IsOption(a, "filter", out value))
                 {
-                    filters.Add(GetStringValue(a, 8));
+                    filters.Add(StringHelper.GetStringValue(value));
                     continue;
                 }
 
-                if (a.StartsWith("/accept-level:"))
+                if (StringHelper.IsOption(a, "accept-level", out value))
                 {
-                    AddLevels(levels, GetStringValue(a, 14));
+                    AddLevels(levels, StringHelper.GetStringValue(value));
                     continue;
                 }
 
-                if (a.StartsWith("/format:"))
+                if (StringHelper.IsOption(a, "format", out value))
                 {
-                    result.Format = GetPrintFormat(GetStringValue(a, 8));
+                    result.Format = GetPrintFormat(StringHelper.GetStringValue(value));
                     continue;
                 }
 
                 if (string.IsNullOrEmpty(result.ScriptsPath))
                 {
-                    result.ScriptsPath = GetStringValue(a, 0);
+                    result.ScriptsPath = StringHelper.GetStringValue(value);
                     continue;
                 }
             }
@@ -163,20 +165,6 @@ namespace CodeTitans.DbMigrator.CLI
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Extracts string value of the parameter.
-        /// </summary>
-        private static string GetStringValue(string text, int startAt)
-        {
-            var result = startAt > 0 ? text.Substring(startAt) : text;
-            if (result.Length > 1 && result[0] == '"' && result[result.Length - 1] == '"')
-            {
-                result = result.Substring(1, result.Length - 2);
-            }
-
-            return result;
         }
     }
 }

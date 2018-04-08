@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="Filters\FuncFilter.cs" />
     <Compile Include="Helpers\AdoDbHelper.cs" />
+    <Compile Include="Helpers\StringHelper.cs" />
     <Compile Include="IDbVersionManager.cs" />
     <Compile Include="IScriptFilter.cs" />
     <Compile Include="Migrations\TSql\DbExecutor.cs" />
